@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  image        String?
+  bio          String?
+  city         String?  @default("São Paulo")
+  /// JSON opcional: campos extra do perfil no app (telefone, género, etc.)
+  appProfileJson String?
+  /// "user" | "admin" — apenas admin acede a /admin
+  role         String   @default("user")
+  /// Notas internas da equipa (área admin)
+  adminNotes   String?
+  /// Soft delete — participante inativado pela curadoria (não apaga histórico técnico)
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscription         Subscription?
+  registrations        EventRegistration[]
+  onboardingAnswers    OnboardingAnswer[]
+  compatibilityProfile CompatibilityProfile?
+  curatedTableMember   AdminCuratedTableMember?
+  passwordResetTokens  PasswordResetToken[]
+}
+
+/// Token único para redefinição de senha (hash guardado; uso único + expiração).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Respostas normalizadas do onboarding (uma linha por pergunta / usuário).
+model OnboardingAnswer {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId   String
+  section      String?
+  answerValue  String
+  answerLabel  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([section])
+  @@index([questionId])
+}
+
+/// Placeholder para eixos de compatibilidade derivados no futuro (matching).
+model CompatibilityProfile {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axesJson  String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Assinatura Se Mov — comunidade ativa, agenda, movimentos
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("active") // active, canceled, past_due
+  planCode  String   @default("SE_MOV")
+  startedAt DateTime @default(now())
+  renewsAt  DateTime?
+  canceledAt DateTime?
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  description  String?
+  type         String // CLASSICO, SENSORIAL, EXCLUSIVO, COMUNIDADE, ROLÊ
+  startsAt     DateTime
+  endsAt       DateTime?
+  venueName    String?
+  venueAddress String?
+  /// Preço em centavos (0 = incluso no Se Mov ou gratuito)
+  priceCents   Int      @default(0)
+  memberOnly   Boolean  @default(false)
+  capacity     Int?
+  imageUrl     String?
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status    String   @default("confirmed") // confirmed, waitlist, cancelled
+  /// Zona de SP escolhida no fluxo do jantar (ex.: pinheiros-vm)
+  regionKey String?
+  /// JSON: ["en","pt"]
+  dinnerLanguages     String?
+  /// JSON: ["$","$$","$$$"]
+  dinnerBudgetTiers   String?
+  dietaryRestrictions Boolean @default(false)
+  /// JSON: ["vegetariano","vegano",...] quando há restrições
+  dietaryTypes        String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+/// Mesas de curadoria admin (sugestão + edição manual). Não confundir com Event/mesa de produto.
+model AdminCuratedTable {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+  status    String   @default("draft") // draft | finalized
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members AdminCuratedTableMember[]
+}
+
+model AdminCuratedTableMember {
+  id        String   @id @default(cuid())
+  tableId   String
+  table     AdminCuratedTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Se true, sugestões automáticas não removem este vínculo
+  pinned    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([tableId])
+}

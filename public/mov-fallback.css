@@ -1,0 +1,32 @@
+/**
+ * Fallback servido em /mov-fallback.css (ficheiro estático).
+ * Base clara alinhada ao app (movApp) se o bundle Tailwind não carregar.
+ */
+html {
+  color-scheme: light;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #faf8f5;
+  color: #1c1917;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a {
+  color: #c45c4a;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* /app Início — largura centrada se o bundle Tailwind falhar (sem sobrescrever cartões/gradientes) */
+#mov-app-inicio {
+  display: block;
+  width: 100%;
+  max-width: 48rem;
+  margin-left: auto;
+  margin-right: auto;
+  color: #1c1917;
+}

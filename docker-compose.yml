@@ -1,0 +1,18 @@
+# Postgres local — alinhado com staging/produção (Prisma provider = postgresql).
+# Uso: docker compose up -d
+# DATABASE_URL=postgresql://mov:mov@localhost:5432/mov?schema=public
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: mov
+      POSTGRES_PASSWORD: mov
+      POSTGRES_DB: mov
+    volumes:
+      - mov_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mov_pgdata:
