@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { authLabelClass, MovAppWelcomeBackdrop } from "@/components/auth/auth-screen";
 import { cn } from "@/lib/utils";
-import { ONBOARDING_COUNTRIES, findCountryByCode } from "./onboarding-countries";
 import type { OnboardingInterstitialVariant, OnboardingStep } from "./onboarding-config";
+import { IconBack, MovWelcomeLogo } from "./welcome-chrome";
+
+export { IconBack, MovWelcomeLogo };
 
 /** Destino padrão após login/cadastro no fluxo MOV (handoff e welcome). */
 export const MOV_POST_AUTH_PATH = "/app";
 
 export function movLoginHref(): string {
   return `/login?callbackUrl=${encodeURIComponent(MOV_POST_AUTH_PATH)}`;
+}
+
+/** Escolha e-mail vs Google antes do formulário de credenciais (landing e handoff). */
+export function movAuthChoiceHref(): string {
+  return `/entrar?callbackUrl=${encodeURIComponent(MOV_POST_AUTH_PATH)}`;
 }
 
 const focusRingWelcome =
@@ -22,23 +29,6 @@ const cardOptionLight =
 
 const cardOptionSelectedLight =
   "rounded-xl border border-movApp-accent bg-movApp-accentSoft px-4 py-4 text-left text-[15px] font-medium leading-snug text-movApp-ink shadow-md shadow-movApp-accent/15 ring-1 ring-movApp-accent/25 transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-movApp-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-movApp-bg";
-
-export function IconGlobe({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
-      <circle cx="12" cy="12" r="10" />
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-    </svg>
-  );
-}
-
-export function IconBack({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M15 18 9 12l6-6" />
-    </svg>
-  );
-}
 
 export function IconClose({ className }: { className?: string }) {
   return (
@@ -53,89 +43,68 @@ type WelcomeProps = {
 };
 
 export function OnboardingWelcome({ onStart }: WelcomeProps) {
-  /** Evita clique antes da hidratação (handler React ainda não ligado — ex.: Playwright, taps rápidos). */
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    setReady(true);
-  }, []);
-
   return (
     <MovAppWelcomeBackdrop>
       <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6">
-        <div className="flex items-start justify-between gap-4">
-          <span className="font-display text-[1.5rem] tracking-[-0.02em] text-movApp-ink">MOV</span>
-          <button
-            type="button"
-            className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-movApp-border bg-movApp-paper text-movApp-ink shadow-sm transition hover:border-movApp-accent/25 hover:bg-movApp-subtle active:scale-[0.98]",
-              focusRingWelcome,
-            )}
-            aria-label="Idioma"
-          >
-            <IconGlobe className="h-5 w-5" />
-          </button>
-        </div>
+        <MovWelcomeLogo />
 
-        <div className="min-h-0 flex-1" aria-hidden />
+        {/* Respiro entre logo e zona central — mantém o topo limpo */}
+        <div
+          className="pointer-events-none min-h-0 w-full shrink-0 grow basis-0 max-h-[min(22dvh,180px)] sm:max-h-[min(26dvh,220px)]"
+          aria-hidden
+        />
 
-        <div className="space-y-5">
-          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-movApp-accent">
-            Jornada inicial
-          </p>
-          <h1 className="text-balance text-center font-display text-[1.65rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.85rem]">
-            Escolheremos as pessoas e o local para você
-          </h1>
-          <p className="text-center text-[15px] leading-relaxed text-movApp-muted">
-            Curadoria real, encontros presenciais — passo a passo.
-          </p>
+        {/* flex-1 + justify-end empurra CTAs + legal para a base útil do ecrã */}
+        <div className="flex min-h-0 w-full flex-1 flex-col justify-end">
+          <div className="shrink-0 pt-2">
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={onStart}
+                className={cn(
+                  "flex min-h-[52px] w-full items-center justify-center rounded-xl bg-movApp-accent py-3.5 text-center text-base font-semibold text-white shadow-[0_10px_32px_rgba(196,92,74,0.22)] transition hover:bg-movApp-accentHover hover:shadow-[0_14px_36px_rgba(196,92,74,0.28)] active:scale-[0.99]",
+                  focusRingWelcome,
+                )}
+              >
+                Começar
+              </button>
+              <a
+                href={movAuthChoiceHref()}
+                className={cn(
+                  "flex min-h-[52px] w-full items-center justify-center rounded-xl border border-movApp-border bg-movApp-paper py-3.5 text-center text-base font-semibold text-movApp-ink shadow-sm transition hover:border-movApp-accent/35 hover:bg-movApp-subtle active:scale-[0.99]",
+                  focusRingWelcome,
+                )}
+              >
+                Eu já tenho uma conta
+              </a>
+            </div>
 
-          <div className="space-y-3 pt-1">
-            <button
-              type="button"
-              disabled={!ready}
-              aria-busy={!ready}
-              onClick={onStart}
-              className={cn(
-                "flex min-h-[52px] w-full items-center justify-center rounded-xl bg-movApp-accent py-3.5 text-center text-base font-semibold text-white shadow-[0_10px_32px_rgba(196,92,74,0.22)] transition hover:bg-movApp-accentHover hover:shadow-[0_14px_36px_rgba(196,92,74,0.28)] active:scale-[0.99] disabled:cursor-wait disabled:opacity-85",
-                focusRingWelcome,
-              )}
-            >
-              Começar
-            </button>
-            <Link
-              href={movLoginHref()}
-              className={cn(
-                "flex min-h-[52px] w-full items-center justify-center rounded-xl border border-movApp-border bg-movApp-paper py-3.5 text-center text-base font-semibold text-movApp-ink shadow-sm transition hover:border-movApp-accent/35 hover:bg-movApp-subtle active:scale-[0.99]",
-                focusRingWelcome,
-              )}
-            >
-              Eu já tenho uma conta
-            </Link>
-            <p className="px-0.5 pt-2 text-center text-[10px] leading-snug text-movApp-muted sm:text-[11px] sm:leading-relaxed">
-              Ao continuar, você concorda com os{" "}
-              <Link
-                href="#"
-                className="underline decoration-movApp-accent/50 underline-offset-[3px] hover:decoration-movApp-accent"
-              >
-                Termos de Serviço
-              </Link>
-              ,{" "}
-              <Link
-                href="#"
-                className="underline decoration-movApp-accent/50 underline-offset-[3px] hover:decoration-movApp-accent"
-              >
-                Política de Privacidade
-              </Link>{" "}
-              e{" "}
-              <Link
-                href="#"
-                className="underline decoration-movApp-accent/50 underline-offset-[3px] hover:decoration-movApp-accent"
-              >
-                Diretrizes da Comunidade
-              </Link>
-              .
-            </p>
-            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-movApp-accent/40" aria-hidden />
+            <div className="pt-5 sm:pt-6">
+              <p className="px-0.5 text-center text-[9px] leading-relaxed text-movApp-muted/95 sm:text-[10px] sm:leading-relaxed">
+                Ao continuar, você concorda com os{" "}
+                <Link
+                  href="/termos"
+                  className="underline decoration-movApp-accent/45 underline-offset-[2px] hover:decoration-movApp-accent"
+                >
+                  Termos de Serviço
+                </Link>
+                ,{" "}
+                <Link
+                  href="/privacidade"
+                  className="underline decoration-movApp-accent/45 underline-offset-[2px] hover:decoration-movApp-accent"
+                >
+                  Política de Privacidade
+                </Link>{" "}
+                e{" "}
+                <Link
+                  href="/diretrizes"
+                  className="underline decoration-movApp-accent/45 underline-offset-[2px] hover:decoration-movApp-accent"
+                >
+                  Diretrizes da Comunidade
+                </Link>
+                .
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -151,8 +120,15 @@ type ResumeProps = {
 
 export function OnboardingResumeModal({ onClose, onContinue, onRestart }: ResumeProps) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-[200] flex items-end justify-center bg-movApp-ink/25 backdrop-blur-md sm:px-4">
-      <div className="pointer-events-auto w-full max-w-md rounded-t-[1.25rem] border border-movApp-border bg-movApp-paper px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_48px_rgba(28,25,23,0.12)]">
+    <div
+      className="fixed inset-0 z-[200] flex items-end justify-center bg-movApp-ink/25 backdrop-blur-md sm:px-4"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        className="relative z-10 w-full max-w-md rounded-t-[1.25rem] border border-movApp-border bg-movApp-paper px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_48px_rgba(28,25,23,0.12)]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-end">
           <button
             type="button"
@@ -195,17 +171,16 @@ export function OnboardingResumeModal({ onClose, onContinue, onRestart }: Resume
 }
 
 type LocationProps = {
-  cityName: string;
   onBack: () => void;
   onContinue: () => void;
   onOpenCityModal: () => void;
 };
 
-export function OnboardingLocationShell({ cityName, onBack, onContinue, onOpenCityModal }: LocationProps) {
+export function OnboardingLocationShell({ onBack, onContinue, onOpenCityModal }: LocationProps) {
   return (
     <MovAppWelcomeBackdrop>
-      <main className="relative z-10 mx-auto min-h-[100dvh] max-w-md px-5 pb-44 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
-        <div className="flex items-center gap-2">
+      <main className="relative z-10 mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6">
+        <div className="flex shrink-0 items-center">
           <button
             type="button"
             onClick={onBack}
@@ -217,44 +192,33 @@ export function OnboardingLocationShell({ cityName, onBack, onContinue, onOpenCi
           >
             <IconBack className="h-6 w-6" />
           </button>
-          <h1 className="flex-1 pr-7 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-movApp-muted">
-            Localização
-          </h1>
         </div>
 
-        <p className="mt-6 text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-movApp-accent">Sua cidade</p>
-        <h2 className="mt-2 text-balance text-center font-display text-[1.5rem] font-normal leading-snug tracking-[-0.03em] text-movApp-ink sm:text-[1.65rem]">
-          Comece a se conectar em {cityName}
-        </h2>
-        <p className="mt-5 text-center text-[15px] leading-relaxed text-movApp-muted">
-          Mesas presenciais, combinação de perfis e um tom discreto — a partir da sua cidade.
-        </p>
+        <div className="flex min-h-0 flex-1 flex-col justify-end pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
+          <div className="mx-auto flex w-full max-w-md flex-col gap-3">
+            <button
+              type="button"
+              onClick={onContinue}
+              className={cn(
+                "flex min-h-[52px] w-full items-center justify-center rounded-xl bg-movApp-accent py-3.5 text-center text-base font-semibold text-white shadow-[0_8px_28px_rgba(196,92,74,0.25)] transition hover:bg-movApp-accentHover",
+                focusRingWelcome,
+              )}
+            >
+              Continuar
+            </button>
+            <button
+              type="button"
+              onClick={onOpenCityModal}
+              className={cn(
+                "min-h-[52px] w-full rounded-xl border border-movApp-border/90 bg-movApp-subtle/50 py-3.5 text-center text-base font-semibold text-movApp-ink transition hover:border-movApp-accent/35 hover:bg-movApp-subtle/70",
+                focusRingWelcome,
+              )}
+            >
+              Mudar minha cidade
+            </button>
+          </div>
+        </div>
       </main>
-
-      <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-[9999] border-t border-movApp-border/70 bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_24px_rgba(28,25,23,0.08)] backdrop-blur-md supports-[backdrop-filter]:bg-white/90">
-        <div className="mx-auto flex max-w-md flex-col gap-3">
-          <button
-            type="button"
-            onClick={onContinue}
-            className={cn(
-              "flex min-h-[52px] w-full items-center justify-center rounded-xl bg-movApp-accent py-3.5 text-center text-base font-semibold text-white shadow-[0_8px_28px_rgba(196,92,74,0.25)] transition hover:bg-movApp-accentHover",
-              focusRingWelcome,
-            )}
-          >
-            Continuar
-          </button>
-          <button
-            type="button"
-            onClick={onOpenCityModal}
-            className={cn(
-              "min-h-[52px] w-full rounded-xl border border-movApp-border/90 bg-movApp-subtle/50 py-3.5 text-center text-base font-semibold text-movApp-ink transition hover:border-movApp-accent/35 hover:bg-movApp-subtle/70",
-              focusRingWelcome,
-            )}
-          >
-            Mudar minha cidade
-          </button>
-        </div>
-      </div>
     </MovAppWelcomeBackdrop>
   );
 }
@@ -267,12 +231,18 @@ type CityModalProps = {
   onClose: () => void;
 };
 
-const DEFAULT_CITIES = [{ id: "sp", name: "São Paulo", flag: "🇧🇷" }];
+type CityRow = { id: string; name: string; enabled: boolean };
+
+const MODAL_CITIES: CityRow[] = [
+  { id: "sp", name: "São Paulo", enabled: true },
+  { id: "rj", name: "Rio de Janeiro", enabled: false },
+  { id: "bh", name: "Belo Horizonte", enabled: false },
+];
 
 export function CitySearchModal({ open, query, onQueryChange, onPickCity, onClose }: CityModalProps) {
   if (!open) return null;
   const q = query.trim().toLowerCase();
-  const visible = DEFAULT_CITIES.filter((c) => {
+  const visible = MODAL_CITIES.filter((c) => {
     if (!q) return true;
     const n = c.name
       .toLowerCase()
@@ -283,10 +253,22 @@ export function CitySearchModal({ open, query, onQueryChange, onPickCity, onClos
   });
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-movApp-ink/25 px-0 backdrop-blur-sm sm:px-4">
-      <div className="max-h-[85dvh] w-full max-w-md overflow-hidden rounded-t-[1.25rem] border border-movApp-border/80 bg-movApp-subtle/95 shadow-2xl backdrop-blur-md">
-        <div className="flex items-center justify-between border-b border-movApp-border/60 bg-movApp-paper px-4 py-3">
-          <span className="font-display text-base font-normal tracking-[-0.02em] text-movApp-ink">Onde você está</span>
+    <div
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-movApp-ink/30 p-4 backdrop-blur-sm sm:p-6"
+      role="presentation"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="city-modal-title"
+        className="flex max-h-[min(88dvh,calc(100dvh-2rem))] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-movApp-border/80 bg-movApp-paper/95 shadow-[0_24px_64px_rgba(28,25,23,0.18)] backdrop-blur-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-movApp-border/60 px-4 py-3.5">
+          <h2 id="city-modal-title" className="font-display text-base font-normal tracking-[-0.02em] text-movApp-ink">
+            Onde você está
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -296,7 +278,7 @@ export function CitySearchModal({ open, query, onQueryChange, onPickCity, onClos
             <IconClose className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-4 pb-4 pt-3">
+        <div className="shrink-0 px-4 pb-2 pt-4">
           <input
             type="search"
             value={query}
@@ -305,49 +287,52 @@ export function CitySearchModal({ open, query, onQueryChange, onPickCity, onClos
             className="w-full rounded-xl border border-movApp-border/90 bg-movApp-paper/50 px-4 py-3 text-[15px] text-movApp-ink shadow-inner shadow-movApp-ink/5 outline-none placeholder:text-movApp-muted/60 focus:border-movApp-accent focus:ring-2 focus:ring-movApp-accent/35"
             autoComplete="off"
           />
-          <ul className="mt-3 max-h-[50dvh] overflow-auto">
-            {visible.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  onClick={() => onPickCity(c.id, c.name)}
-                  className={cn(
-                    "mb-2 flex min-h-[48px] w-full items-center justify-between rounded-xl border border-movApp-border/70 bg-movApp-paper/40 px-4 py-3 text-left text-[15px] font-medium text-movApp-ink transition hover:border-movApp-accent/30 hover:bg-movApp-subtle/60",
-                    focusRingWelcome,
-                  )}
-                >
-                  <span>
-                    {c.name} {c.flag}
-                  </span>
-                </button>
-              </li>
-            ))}
-            {visible.length === 0 && (
-              <li className="px-3 py-6 text-center text-sm leading-relaxed text-movApp-muted">
-                Nenhum resultado. Por agora, a MOV opera apenas em São Paulo.
-              </li>
-            )}
-          </ul>
         </div>
+        <ul className="overflow-y-auto overscroll-contain px-4 pb-4 pt-1 [max-height:min(52dvh,calc(88dvh-11rem))]">
+          {visible.map((c) => (
+            <li key={c.id} className="mb-2 last:mb-0">
+              <button
+                type="button"
+                disabled={!c.enabled}
+                onClick={() => {
+                  if (c.enabled) onPickCity(c.id, c.name);
+                }}
+                className={cn(
+                  "flex min-h-[52px] w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition",
+                  c.enabled
+                    ? cn(
+                        "border-movApp-border/70 bg-movApp-paper/40 text-movApp-ink hover:border-movApp-accent/30 hover:bg-movApp-subtle/60",
+                        focusRingWelcome,
+                      )
+                    : "cursor-not-allowed border-movApp-border/40 border-dashed bg-movApp-subtle/30 text-movApp-muted/90",
+                )}
+              >
+                <span className={cn(!c.enabled && "text-movApp-muted")}>{c.name}</span>
+                {!c.enabled && (
+                  <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.12em] text-movApp-muted">
+                    Em breve
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+          {visible.length === 0 && (
+            <li className="px-2 py-8 text-center text-sm leading-relaxed text-movApp-muted">
+              Nenhum resultado para essa busca.
+            </li>
+          )}
+        </ul>
       </div>
     </div>
   );
 }
 
-/* —— Progress shell (barra fina + secção) —— */
+/* —— Topo só com voltar (sem secção, contador nem barra de progresso) —— */
 
-type ProgressHeaderProps = {
-  stepIndex: number;
-  totalSteps: number;
-  section?: string;
-  onBack: () => void;
-};
-
-export function OnboardingProgressHeader({ stepIndex, totalSteps, section, onBack }: ProgressHeaderProps) {
-  const pct = useMemo(() => ((stepIndex + 1) / totalSteps) * 100, [stepIndex, totalSteps]);
+export function OnboardingBackHeader({ onBack }: { onBack: () => void }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-movApp-border/60 bg-movApp-paper/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md">
-      <div className="mx-auto grid max-w-md grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-start gap-1">
+    <header className="sticky top-0 z-20 bg-movApp-paper/95 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 backdrop-blur-md">
+      <div className="mx-auto flex max-w-md items-start">
         <button
           type="button"
           onClick={onBack}
@@ -359,18 +344,6 @@ export function OnboardingProgressHeader({ stepIndex, totalSteps, section, onBac
         >
           <IconBack className="h-6 w-6" />
         </button>
-        <div className="min-w-0 pt-1.5">
-          <div className="h-0.5 w-full overflow-hidden rounded-full bg-movApp-border/70">
-            <div
-              className="h-full rounded-full bg-movApp-accent transition-[width] duration-300 ease-out"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-movApp-muted">
-            {section ? `${section} · ${stepIndex + 1} / ${totalSteps}` : `${stepIndex + 1} / ${totalSteps}`}
-          </p>
-        </div>
-        <span aria-hidden className="block w-10" />
       </div>
     </header>
   );
@@ -378,22 +351,20 @@ export function OnboardingProgressHeader({ stepIndex, totalSteps, section, onBac
 
 type QuestionProps = {
   step: OnboardingStep;
-  stepIndex: number;
-  totalSteps: number;
   selectedValue?: string;
   onSelect: (value: string) => void;
   onBack: () => void;
 };
 
-export function QuestionStepView({ step, stepIndex, totalSteps, selectedValue, onSelect, onBack }: QuestionProps) {
+export function QuestionStepView({ step, selectedValue, onSelect, onBack }: QuestionProps) {
   if (step.kind !== "single" || !step.options) return null;
 
   return (
     <MovAppWelcomeBackdrop>
       <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={step.section} onBack={onBack} />
+        <OnboardingBackHeader onBack={onBack} />
 
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8 sm:px-6">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-5 sm:px-6">
           <div className="shrink-0">
             <div className="mb-4 h-px w-12 rounded-full bg-gradient-to-r from-movApp-accent/70 to-transparent" aria-hidden />
             <h2 className="text-balance font-display text-[1.4rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.5rem]">
@@ -435,14 +406,12 @@ export function QuestionStepView({ step, stepIndex, totalSteps, selectedValue, o
 
 type ScaleProps = {
   step: OnboardingStep;
-  stepIndex: number;
-  totalSteps: number;
   selectedValue?: string;
   onSelect: (value: string) => void;
   onBack: () => void;
 };
 
-export function ScaleStepView({ step, stepIndex, totalSteps, selectedValue, onSelect, onBack }: ScaleProps) {
+export function ScaleStepView({ step, selectedValue, onSelect, onBack }: ScaleProps) {
   if (step.kind !== "scale" || !step.title || !step.scaleLeftLabel || !step.scaleRightLabel) return null;
 
   const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -450,9 +419,9 @@ export function ScaleStepView({ step, stepIndex, totalSteps, selectedValue, onSe
   return (
     <MovAppWelcomeBackdrop>
       <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={step.section} onBack={onBack} />
+        <OnboardingBackHeader onBack={onBack} />
 
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8 sm:px-6">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-5 sm:px-6">
           <div className="shrink-0">
             <div className="mb-4 h-px w-12 rounded-full bg-gradient-to-r from-movApp-accent/70 to-transparent" aria-hidden />
             <h2 className="text-balance font-display text-[1.4rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.5rem]">
@@ -491,20 +460,17 @@ export function ScaleStepView({ step, stepIndex, totalSteps, selectedValue, onSe
 
 type InterstitialProps = {
   variant: OnboardingInterstitialVariant;
-  stepIndex: number;
-  totalSteps: number;
-  section?: string;
   onNext: () => void;
   onBack: () => void;
 };
 
-export function InterstitialStepView({ variant, stepIndex, totalSteps, section, onNext, onBack }: InterstitialProps) {
+export function InterstitialStepView({ variant, onNext, onBack }: InterstitialProps) {
   if (variant === "score_96") {
     return (
       <MovAppWelcomeBackdrop>
         <div className="flex min-h-[100dvh] flex-col">
-          <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={section} onBack={onBack} />
-          <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6 sm:px-6">
+          <OnboardingBackHeader onBack={onBack} />
+          <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
             <div className="mt-1 grid grid-cols-3 gap-2">
               <div className="aspect-[3/4] rounded-xl bg-gradient-to-br from-movApp-accent/20 via-rose-100/90 to-movApp-subtle ring-1 ring-movApp-border/40" />
               <div className="aspect-[3/4] rounded-xl bg-gradient-to-br from-stone-200/90 via-stone-100 to-movApp-bg ring-1 ring-movApp-border/40" />
@@ -545,8 +511,8 @@ export function InterstitialStepView({ variant, stepIndex, totalSteps, section, 
   return (
     <MovAppWelcomeBackdrop>
       <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={section} onBack={onBack} />
-        <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-6 sm:px-6">
+        <OnboardingBackHeader onBack={onBack} />
+        <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-5 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4 sm:px-6">
           <div className="flex flex-1 flex-col justify-center pt-2">
             <div className="rounded-2xl border border-movApp-border bg-movApp-paper px-6 py-10 text-center shadow-[0_16px_48px_rgba(28,25,23,0.08)] ring-1 ring-movApp-border/50">
               <div className="relative mx-auto flex h-36 w-36 items-center justify-center">
@@ -585,174 +551,14 @@ export function InterstitialStepView({ variant, stepIndex, totalSteps, section, 
   );
 }
 
-type CountryPickerModalProps = {
-  open: boolean;
-  query: string;
-  onQueryChange: (q: string) => void;
-  highlightedCode: string | null;
-  onHighlight: (code: string) => void;
-  onConfirm: () => void;
-  onClose: () => void;
-};
-
-export function CountryPickerModal({ open, query, onQueryChange, highlightedCode, onHighlight, onConfirm, onClose }: CountryPickerModalProps) {
-  if (!open) return null;
-  const q = query.trim().toLowerCase();
-  const visible = ONBOARDING_COUNTRIES.filter((c) => {
-    if (!q) return true;
-    const n = c.name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{M}/gu, "");
-    const qq = q.normalize("NFD").replace(/\p{M}/gu, "");
-    return n.includes(qq) || c.code.toLowerCase().includes(qq);
-  });
-
-  return (
-    <div className="fixed inset-0 z-[300] flex items-end justify-center bg-movApp-ink/25 px-0 backdrop-blur-sm sm:px-4">
-      <div className="flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[1.25rem] border border-movApp-border/80 bg-movApp-paper shadow-2xl">
-        <div className="flex shrink-0 items-center justify-between border-b border-movApp-border/60 bg-movApp-paper px-4 py-3">
-          <span className="font-display text-base font-normal tracking-[-0.02em] text-movApp-ink">País</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 text-movApp-muted transition hover:bg-movApp-subtle hover:text-movApp-ink"
-            aria-label="Fechar"
-          >
-            <IconClose className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Buscar país"
-            className="w-full rounded-xl border border-movApp-border/90 bg-movApp-paper/50 px-4 py-3 text-[15px] text-movApp-ink shadow-inner shadow-movApp-ink/5 outline-none placeholder:text-movApp-muted/60 focus:border-movApp-accent focus:ring-2 focus:ring-movApp-accent/35"
-            autoComplete="off"
-          />
-          <ul className="mt-3 pb-2">
-            {visible.map((c) => (
-              <li key={c.code}>
-                <button
-                  type="button"
-                  onClick={() => onHighlight(c.code)}
-                  className={cn(
-                    "mb-2 flex min-h-[48px] w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-[15px] font-medium transition",
-                    highlightedCode === c.code
-                      ? "border-movApp-accent bg-movApp-accent/20 text-movApp-ink shadow-md ring-1 ring-movApp-accent/30"
-                      : "border-movApp-border/70 bg-movApp-paper/40 text-movApp-ink hover:border-movApp-accent/30 hover:bg-movApp-subtle/50",
-                    focusRingWelcome,
-                  )}
-                >
-                  <span>
-                    {c.flag} {c.name}
-                  </span>
-                </button>
-              </li>
-            ))}
-            {visible.length === 0 && (
-              <li className="px-3 py-6 text-center text-sm text-movApp-muted">Nenhum país encontrado.</li>
-            )}
-          </ul>
-        </div>
-        <div className="shrink-0 border-t border-movApp-border/60 bg-movApp-paper/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
-          <button
-            type="button"
-            disabled={!highlightedCode}
-            onClick={onConfirm}
-            aria-disabled={!highlightedCode}
-            className={cn(
-              "flex min-h-[52px] w-full items-center justify-center rounded-xl bg-movApp-accent py-3.5 text-base font-semibold text-white transition hover:bg-movApp-accentHover disabled:cursor-not-allowed disabled:opacity-45",
-              focusRingWelcome,
-            )}
-          >
-            Confirmar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type CountryStepProps = {
-  step: OnboardingStep;
-  stepIndex: number;
-  totalSteps: number;
-  value?: string;
-  onConfirm: (countryCode: string) => void;
-  onBack: () => void;
-};
-
-export function CountryStepView({ step, stepIndex, totalSteps, value, onConfirm, onBack }: CountryStepProps) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [pending, setPending] = useState<string | null>(value ?? null);
-
-  useEffect(() => {
-    setPending(value ?? null);
-  }, [value]);
-
-  const selected = value ? findCountryByCode(value) : undefined;
-
-  return (
-    <MovAppWelcomeBackdrop>
-      <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={step.section} onBack={onBack} />
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-7 sm:px-6">
-          <h2 className="text-balance font-display text-[1.4rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.5rem]">
-            {step.title}
-          </h2>
-          {step.subtitle && <p className="mt-3 text-[15px] leading-relaxed text-movApp-muted">{step.subtitle}</p>}
-
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setPending(value ?? null);
-              setOpen(true);
-            }}
-            className={cn(
-              "mt-10 min-h-[56px] rounded-xl border border-movApp-border/80 bg-movApp-paper/45 px-4 py-4 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-movApp-accent/35 hover:bg-movApp-subtle/40",
-              focusRingWelcome,
-            )}
-          >
-            <span className={cn(authLabelClass, "block")}>País</span>
-            <p className="mt-2 text-[15px] font-medium text-movApp-ink">
-              {selected ? `${selected.flag} ${selected.name}` : "Toque para buscar e selecionar"}
-            </p>
-          </button>
-
-          <CountryPickerModal
-            open={open}
-            query={query}
-            onQueryChange={setQuery}
-            highlightedCode={pending}
-            onHighlight={setPending}
-            onConfirm={() => {
-              if (pending) {
-                onConfirm(pending);
-                setOpen(false);
-              }
-            }}
-            onClose={() => setOpen(false)}
-          />
-        </div>
-      </div>
-    </MovAppWelcomeBackdrop>
-  );
-}
-
 type BirthdayProps = {
   step: OnboardingStep;
-  stepIndex: number;
-  totalSteps: number;
   value?: string;
   onConfirm: (isoDate: string) => void;
   onBack: () => void;
 };
 
-export function BirthdayStepView({ step, stepIndex, totalSteps, value, onConfirm, onBack }: BirthdayProps) {
+export function BirthdayStepView({ step, value, onConfirm, onBack }: BirthdayProps) {
   const [local, setLocal] = useState(value ?? "");
 
   useEffect(() => {
@@ -765,8 +571,8 @@ export function BirthdayStepView({ step, stepIndex, totalSteps, value, onConfirm
   return (
     <MovAppWelcomeBackdrop>
       <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={step.section} onBack={onBack} />
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-7 sm:px-6">
+        <OnboardingBackHeader onBack={onBack} />
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-5 sm:px-6">
           <h2 className="text-balance font-display text-[1.4rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.5rem]">
             {step.title}
           </h2>
@@ -804,17 +610,15 @@ export function BirthdayStepView({ step, stepIndex, totalSteps, value, onConfirm
 
 type AuthProps = {
   step: OnboardingStep;
-  stepIndex: number;
-  totalSteps: number;
   onBack: () => void;
 };
 
-export function AuthHandoffView({ step, stepIndex, totalSteps, onBack }: AuthProps) {
+export function AuthHandoffView({ step, onBack }: AuthProps) {
   return (
     <MovAppWelcomeBackdrop>
       <div className="flex min-h-[100dvh] flex-col">
-        <OnboardingProgressHeader stepIndex={stepIndex} totalSteps={totalSteps} section={step.section} onBack={onBack} />
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-8">
+        <OnboardingBackHeader onBack={onBack} />
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-6">
           <h2 className="text-balance text-center font-display text-[1.5rem] font-normal leading-[1.2] tracking-[-0.03em] text-movApp-ink sm:text-[1.65rem]">
             {step.title}
           </h2>
@@ -862,7 +666,7 @@ export function AuthHandoffView({ step, stepIndex, totalSteps, onBack }: AuthPro
           <p className="mt-12 text-center text-sm leading-relaxed text-movApp-muted">
             Já tem conta?{" "}
             <Link
-              href={movLoginHref()}
+              href={movAuthChoiceHref()}
               className="font-semibold text-movApp-accent underline decoration-movApp-accent/40 underline-offset-[5px] transition hover:decoration-movApp-accent"
             >
               Entrar

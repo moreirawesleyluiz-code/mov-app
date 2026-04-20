@@ -19,7 +19,15 @@ export async function requireAgendaSeMovAccess(): Promise<{
   if (!userId && !demo) redirect("/app");
 
   if (userId) {
-    const sub = await prisma.subscription.findUnique({ where: { userId } });
+    let sub: Awaited<ReturnType<typeof prisma.subscription.findUnique>> = null;
+    let subscriptionFailed = false;
+    try {
+      sub = await prisma.subscription.findUnique({ where: { userId } });
+    } catch (err) {
+      console.error("[MOV] requireAgendaSeMovAccess subscription:", err);
+      subscriptionFailed = true;
+    }
+    if (subscriptionFailed) redirect("/app");
     if (sub?.status !== "active" && !demo) redirect("/app");
   }
 

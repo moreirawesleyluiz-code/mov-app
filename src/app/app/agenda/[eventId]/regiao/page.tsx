@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { JantarRegionForm } from "@/components/jantar-region-form";
-import { formatDinnerWeekdayDate } from "@/lib/dinner-format";
 import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { SP_DINNER_REGIONS } from "@/lib/sp-regions";
 import { prisma } from "@/lib/prisma";
@@ -35,13 +34,10 @@ export default async function JantarRegiaoPage({ params }: Params) {
     redirect("/app/agenda");
   }
 
-  const eventDateLine = formatDinnerWeekdayDate(new Date(event.startsAt));
-
   return (
     <JantarRegionForm
       eventId={event.id}
       regions={SP_DINNER_REGIONS}
-      eventDateLine={`Data escolhida: ${eventDateLine}`}
     />
   );
 }

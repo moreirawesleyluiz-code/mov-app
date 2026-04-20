@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { JANTAR_FROM_INICIO_KEY } from "@/lib/jantar-nav-inicio";
+import { syncPendingOnboardingAfterAuth } from "@/lib/onboarding-client-sync";
 import { cn } from "@/lib/utils";
 
 const NAV_CORE = [
@@ -101,6 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const authed = status === "authenticated" && !!session?.user;
 
   const [jantarFromInicio, setJantarFromInicio] = useState(false);
+  const onboardingSynced = useRef(false);
 
   useEffect(() => {
     try {
@@ -109,6 +111,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       setJantarFromInicio(false);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") onboardingSynced.current = false;
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || onboardingSynced.current) return;
+    onboardingSynced.current = true;
+    void syncPendingOnboardingAfterAuth().catch(() => {});
+  }, [status]);
 
   function onNavClick() {
     clearJantarNavOrigin();

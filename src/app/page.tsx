@@ -1,24 +1,10 @@
-import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 
 /**
- * Entrada do produto: jornada inicial (pré-app). Utilizadores já autenticados vão direto ao app.
+ * Landing pública — sem `redirect()` para `/app` no servidor.
+ * Antes: `auth()` via RSC podia ver sessão e enviar para `/app`, enquanto o middleware (JWT no Edge)
+ * não reconhecia o token → `/app` → `/login?callbackUrl=/app` → loop ao voltar para `/`.
  */
-export default async function HomePage() {
-  const session = await auth();
-  if (session?.user) {
-    redirect(session.user.role === "admin" ? "/admin" : "/app");
-  }
-
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-[100dvh] bg-movApp-bg [color-scheme:light]" aria-hidden />
-      }
-    >
-      <OnboardingFlow />
-    </Suspense>
-  );
+export default function HomePage() {
+  return <OnboardingFlow />;
 }

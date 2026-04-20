@@ -2,7 +2,6 @@ import {
   ONBOARDING_STEPS,
   type OnboardingStep,
 } from "@/components/onboarding/onboarding-config";
-import { findCountryByCode } from "@/components/onboarding/onboarding-countries";
 
 export function getStepByQuestionId(questionId: string): OnboardingStep | undefined {
   return ONBOARDING_STEPS.find((s) => s.id === questionId);
@@ -28,10 +27,6 @@ export function resolveAnswerLabel(
   }
   const step = getStepByQuestionId(questionId);
   if (!step) return value;
-  if (step.kind === "country") {
-    const c = findCountryByCode(value);
-    return c ? `${c.flag} ${c.name}` : value;
-  }
   if (step.kind === "birthday") {
     try {
       const d = new Date(`${value}T12:00:00`);

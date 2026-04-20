@@ -76,8 +76,8 @@ export function DinnerSlotActions({
         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-movApp-accent text-white shadow-sm transition hover:bg-movApp-accentHover"
         aria-label={
           registered && demoFlow
-            ? "Abrir fluxo do jantar (modo demonstração)"
-            : "Escolher região para esta data"
+            ? "Abrir fluxo da experiência (modo demonstração)"
+            : "Escolher região para esta experiência"
         }
       >
         <ArrowIcon />

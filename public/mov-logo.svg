@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 104 28" fill="none" role="img" aria-label="MOV">
+  <rect x="0" y="7" width="3" height="14" rx="1.5" fill="#c45c4a" />
+  <text
+    x="12"
+    y="21"
+    fill="#1c1917"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="21"
+    font-weight="400"
+    letter-spacing="-0.03em"
+  >
+    MOV
+  </text>
+</svg>

@@ -63,10 +63,6 @@ test.describe("QA fluxo ponta a ponta", () => {
 
     await clickFirstQuestionOption(page);
 
-    await page.getByText("Toque para buscar e selecionar").click();
-    await page.getByRole("button", { name: /Brasil/ }).click();
-    await page.getByRole("button", { name: "Confirmar" }).click();
-
     await page.locator('input[type="date"]').fill("1990-06-15");
     await page.getByRole("button", { name: "Confirmar" }).click();
 
@@ -76,9 +72,7 @@ test.describe("QA fluxo ponta a ponta", () => {
 
     await page.getByRole("button", { name: "Continuar" }).click();
 
-    await page.getByRole("link", { name: /Cadastre-se com e-mail/ }).click();
-
-    await expect(page).toHaveURL(/\/register$/);
+    await page.waitForURL(/\/register/, { timeout: 30_000 });
 
     await page.getByLabel("Nome").fill("QA Fluxo");
     await page.getByLabel("E-mail").fill(email);

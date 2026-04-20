@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -11,7 +11,8 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String?
-  passwordHash String
+  /// Null para contas criadas apenas via OAuth (ex.: Google).
+  passwordHash String?
   image        String?
   bio          String?
   city         String?  @default("São Paulo")

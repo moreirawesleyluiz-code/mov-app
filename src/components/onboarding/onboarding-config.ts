@@ -8,7 +8,6 @@ export type OnboardingStepKind =
   | "single"
   | "scale"
   | "interstitial"
-  | "country"
   | "birthday"
   | "auth";
 
@@ -34,16 +33,14 @@ export type OnboardingStep = {
 };
 
 /**
- * Ordem fixa: localização → 21 personalidade → 96% → identidade (incl. país e data) → 82% → auth.
+ * Ordem fixa: localização → 21 personalidade → 96% → identidade (data e restantes) → 82% → auth.
  * Índice 0 = localização; último = entrada (cadastro/login).
  */
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "location",
     kind: "location",
-    section: "Sua cidade",
-    title: "Comece a se conectar em São Paulo",
-    subtitle: "A MOV organiza encontros presenciais com curadoria. Por enquanto, São Paulo é o palco.",
+    /** Textos da UI estão em `OnboardingLocationShell` / modal — aqui só metadados do passo. */
   },
 
   /* —— Bloco 1: Personalidade (21) —— */
@@ -266,13 +263,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       { value: "artes", label: "Artes" },
       { value: "politica", label: "Política" },
     ],
-  },
-  {
-    id: "id_country",
-    kind: "country",
-    section: "Identidade",
-    title: "De qual país é você?",
-    subtitle: "Busque e confirme para seguir.",
   },
   {
     id: "id_birthday",

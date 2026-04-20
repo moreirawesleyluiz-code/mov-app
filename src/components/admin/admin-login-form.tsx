@@ -31,7 +31,8 @@ export function AdminLoginForm() {
     setError(null);
     setLoading(true);
     try {
-      const callbackUrl = safeAdminCallback(searchParams.get("callbackUrl"));
+      const path = safeAdminCallback(searchParams.get("callbackUrl"));
+      const callbackUrl = new URL(path, window.location.origin).href;
       const res = await signIn("credentials", {
         email: email.trim().toLowerCase(),
         password,

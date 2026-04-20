@@ -1,7 +1,8 @@
+/** Estilos globais (Tailwind + base) — deve permanecer importado neste layout raiz. */
+import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { Providers } from "./providers";
-import "./globals.css";
 
 const appOrigin =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -49,11 +50,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`${dmSans.variable} ${fraunces.variable}`}>
-      <head>
-        {/* Estático em /public — pedido separado do bundle Tailwind (útil se o CSS de /_next falhar no browser embutido) */}
-        {/* eslint-disable-next-line @next/next/no-css-tags */}
-        <link rel="stylesheet" href="/mov-fallback.css" />
-      </head>
       <body className="min-h-screen bg-movApp-bg font-sans text-movApp-ink antialiased [color-scheme:light]">
         <Providers>{children}</Providers>
       </body>

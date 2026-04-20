@@ -7,14 +7,14 @@ export type SpRegion = {
 };
 
 export const SP_DINNER_REGIONS: SpRegion[] = [
-  { id: "jardins-itaim-moema", label: "Jardins/Itaim Bibi/Moema", enabled: true },
-  { id: "pinheiros-vila-madalena", label: "Pinheiros/Vila Madalena", enabled: true },
+  { id: "jardins-itaim-moema", label: "Jardins / Itaim Bibi / Moema", enabled: true },
+  { id: "pinheiros-vila-madalena", label: "Pinheiros / Vila Madalena", enabled: true },
   {
     id: "centro-santa-cecilia-perdizes",
-    label: "Centro/Santa Cecília/Perdizes/Higienópolis",
+    label: "Centro / Santa Cecília / Perdizes / Higienópolis",
     enabled: false,
   },
-  { id: "tatuape-mooca-bras", label: "Tatuapé/Mooca/Brás", enabled: false },
+  { id: "tatuape-mooca-bras", label: "Tatuapé / Mooca / Brás", enabled: false },
 ];
 
 export function isValidRegionKey(key: string): boolean {

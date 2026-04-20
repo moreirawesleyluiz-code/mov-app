@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buildSignupOnboardingHref } from "@/lib/onboarding-signup-intent";
 
 export function SiteHeader() {
   return (
@@ -15,7 +16,7 @@ export function SiteHeader() {
             Entrar
           </Link>
           <Link
-            href="/register"
+            href={buildSignupOnboardingHref()}
             className="inline-flex items-center justify-center rounded-xl bg-mov-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-mov-accentHover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mov-accent"
           >
             Criar conta

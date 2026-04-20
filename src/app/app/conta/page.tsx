@@ -8,29 +8,50 @@ import { ChevronRightIcon } from "@/components/conta/conta-icons";
 import { parseAppProfileExtra, splitDisplayName } from "@/lib/app-profile-extra";
 import { prisma } from "@/lib/prisma";
 
+type ContaUserRow = {
+  name: string | null;
+  email: string;
+  image: string | null;
+  city: string | null;
+  appProfileJson: string | null;
+};
+
 export default async function ContaPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/");
   const userId = session.user.id;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      name: true,
-      email: true,
-      image: true,
-      city: true,
-      appProfileJson: true,
-    },
-  });
+  let user: ContaUserRow | null = null;
+  let eventsCount = 0;
+  let sub: Awaited<ReturnType<typeof prisma.subscription.findUnique>> = null;
+  let loadFailed = false;
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        email: true,
+        image: true,
+        city: true,
+        appProfileJson: true,
+      },
+    });
+    if (user) {
+      const counts = await Promise.all([
+        prisma.eventRegistration.count({
+          where: { userId, status: { not: "cancelled" } },
+        }),
+        prisma.subscription.findUnique({ where: { userId } }),
+      ]);
+      eventsCount = counts[0];
+      sub = counts[1];
+    }
+  } catch (err) {
+    console.error("[MOV] ContaPage:", err);
+    loadFailed = true;
+  }
+  if (loadFailed) redirect("/login?callbackUrl=/app/conta");
   if (!user) redirect("/");
-
-  const [eventsCount, sub] = await Promise.all([
-    prisma.eventRegistration.count({
-      where: { userId, status: { not: "cancelled" } },
-    }),
-    prisma.subscription.findUnique({ where: { userId } }),
-  ]);
 
   const extra = parseAppProfileExtra(user.appProfileJson);
   const split = splitDisplayName(user.name);

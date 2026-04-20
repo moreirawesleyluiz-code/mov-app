@@ -1,8 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+
+/** Navegação hard para a origem atual — não passa pelo router do Next (evita soft-nav preso em /login?callbackUrl=…). */
+function navigateAuthToLanding(href: string) {
+  window.location.href = new URL(href, window.location.origin).href;
+}
 
 /** Fundo premium escuro (grid + halos) — reutilizável na entrada e onboarding. */
 export function MovPremiumBackdrop({
@@ -77,17 +81,24 @@ export const authInputClass =
 type AuthScreenProps = {
   children: ReactNode;
   footer: ReactNode;
+  /** Destino explícito do "Voltar" e do logótipo (predefinição: landing pública). */
+  backHref?: string;
+  /** Logótipo textual "MOV" abaixo do Voltar — desligar para ecrãs só com título no cartão (ex.: login refinado). */
+  showWordmark?: boolean;
 };
 
-function AuthBackToHomeLink() {
+function AuthBackToHomeControl({ href }: { href: string }) {
   return (
-    <Link
-      href="/"
+    <button
+      type="button"
+      onClick={() => navigateAuthToLanding(href)}
       aria-label="Voltar para a página inicial"
       className={cn(
-        "inline-flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-medium text-movApp-muted",
-        "transition-colors hover:bg-movApp-subtle/90 hover:text-movApp-ink",
+        "inline-flex min-h-[44px] items-center gap-2 rounded-xl px-3 py-2 text-left text-[15px] font-medium text-movApp-muted",
+        "border-0 bg-transparent font-inherit transition-colors",
+        "hover:bg-movApp-subtle/90 hover:text-movApp-ink",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-movApp-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-movApp-bg",
+        "cursor-pointer",
       )}
     >
       <svg
@@ -105,11 +116,11 @@ function AuthBackToHomeLink() {
         <path d="M15 18l-6-6 6-6" />
       </svg>
       Voltar
-    </Link>
+    </button>
   );
 }
 
-export function AuthScreen({ children, footer }: AuthScreenProps) {
+export function AuthScreen({ children, footer, backHref = "/", showWordmark = true }: AuthScreenProps) {
   return (
     <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-movApp-bg pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] [color-scheme:light]">
       <div
@@ -124,15 +135,22 @@ export function AuthScreen({ children, footer }: AuthScreenProps) {
         className="pointer-events-none absolute -bottom-36 -left-24 h-64 w-64 rounded-full bg-movApp-gold/12 blur-3xl"
         aria-hidden
       />
-      <div className="relative mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center px-4 py-10 sm:px-5 sm:py-14">
-        <div className="flex w-full flex-col gap-5">
-          <AuthBackToHomeLink />
-          <Link
-            href="/"
-            className="inline-block w-fit font-display text-[1.65rem] tracking-[-0.02em] text-movApp-ink transition hover:text-movApp-accent"
-          >
-            MOV
-          </Link>
+      <div className="relative z-10 mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center px-4 py-8 sm:px-5 sm:py-12">
+        <div className={cn("relative z-[100] flex w-full flex-col", showWordmark ? "gap-5" : "gap-0")}>
+          <AuthBackToHomeControl href={backHref} />
+          {showWordmark && (
+            <button
+              type="button"
+              onClick={() => navigateAuthToLanding(backHref)}
+              aria-label="MOV — página inicial"
+              className={cn(
+                "inline-block w-fit border-0 bg-transparent p-0 text-left font-display text-[1.65rem] tracking-[-0.02em] text-movApp-ink transition hover:text-movApp-accent",
+                "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-movApp-accent/35 focus-visible:ring-offset-2 focus-visible:ring-offset-movApp-bg",
+              )}
+            >
+              MOV
+            </button>
+          )}
         </div>
         {children}
         {footer}

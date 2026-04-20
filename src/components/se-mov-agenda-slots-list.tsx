@@ -1,10 +1,13 @@
 import { DinnerSlotActions } from "@/components/dinner-slot-actions";
 import { DinnerTypeIcon } from "@/components/dinner-type-icon";
 import { formatDinnerTime, formatDinnerWeekdayDate } from "@/lib/dinner-format";
+import type { SeMovEventKind } from "@/lib/se-mov-event-kind";
 
 export type SeMovAgendaSlotEvent = {
   id: string;
   startsAt: Date;
+  eventKind: SeMovEventKind;
+  displayName: string;
 };
 
 type Reg = { eventId: string; status: string };
@@ -33,20 +36,13 @@ export function SeMovAgendaSlotsList({
     <>
       <h2 className={`font-display text-xl text-movApp-ink ${datesHeadingClassName}`}>Datas disponíveis</h2>
 
-      {demoJantarFlow ? (
-        <p className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
-          <strong className="font-semibold text-amber-950">Modo demonstração:</strong> você pode abrir o fluxo (região →
-          preferências → resumo) mesmo com data já reservada, para revisar as telas.
-        </p>
-      ) : null}
-
       <ul className="flex flex-col gap-3">
         {events.length === 0 && (
           <li className="rounded-2xl border border-movApp-border bg-movApp-subtle/80 p-8 text-center text-sm text-movApp-muted">
             Nenhuma data disponível no momento. Volte em breve.
           </li>
         )}
-        {events.map((ev, index) => {
+        {events.map((ev) => {
           const registered = regMap.has(ev.id);
           const waitlist = regMap.get(ev.id) === "waitlist";
           const start = new Date(ev.startsAt);
@@ -55,9 +51,9 @@ export function SeMovAgendaSlotsList({
               key={ev.id}
               className="flex items-center gap-3 rounded-2xl border border-movApp-border bg-movApp-paper p-4 shadow-sm"
             >
-              <DinnerTypeIcon index={index} />
+              <DinnerTypeIcon kind={ev.eventKind} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-movApp-muted">Jantar</p>
+                <p className="text-sm text-movApp-muted">{ev.displayName}</p>
                 <p className="truncate text-base font-bold text-movApp-ink">{formatDinnerWeekdayDate(start)}</p>
                 <p className="text-sm text-movApp-muted">{formatDinnerTime(start)}</p>
               </div>

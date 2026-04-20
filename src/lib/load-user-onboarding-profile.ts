@@ -23,34 +23,42 @@ export type UserOnboardingProfileData = {
 
 export async function loadUserOnboardingProfile(): Promise<UserOnboardingProfileData | null> {
   const session = await auth();
-  if (!session?.user?.id) return null;
+  const userId = session?.user?.id;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
 
-  const userId = session.user.id;
-  const [user, answers, profile] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { city: true, email: true, name: true },
-    }),
-    prisma.onboardingAnswer.findMany({
-      where: { userId },
-      select: { questionId: true, answerValue: true, answerLabel: true, section: true },
-      orderBy: { questionId: "asc" },
-    }),
-    prisma.compatibilityProfile.findUnique({
-      where: { userId },
-      select: { axesJson: true, updatedAt: true },
-    }),
-  ]);
+  try {
+    const [user, answers, profile] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { city: true, email: true, name: true },
+      }),
+      prisma.onboardingAnswer.findMany({
+        where: { userId },
+        select: { questionId: true, answerValue: true, answerLabel: true, section: true },
+        orderBy: { questionId: "asc" },
+      }),
+      prisma.compatibilityProfile.findUnique({
+        where: { userId },
+        select: { axesJson: true, updatedAt: true },
+      }),
+    ]);
 
-  const axes = profile?.axesJson ? parseCompatibilityAxes(profile.axesJson) : null;
+    // JWT válido mas utilizador já não existe na BD — não continuar (evita estados inconsistentes / erros a jusante).
+    if (!user) return null;
 
-  return {
-    userId,
-    user,
-    answerCount: answers.length,
-    answers,
-    profileUpdatedAt: profile?.updatedAt ?? null,
-    axes,
-    axesJsonRaw: profile?.axesJson ?? null,
-  };
+    const axes = profile?.axesJson ? parseCompatibilityAxes(profile.axesJson) : null;
+
+    return {
+      userId,
+      user,
+      answerCount: answers.length,
+      answers,
+      profileUpdatedAt: profile?.updatedAt ?? null,
+      axes,
+      axesJsonRaw: profile?.axesJson ?? null,
+    };
+  } catch (err) {
+    console.error("[MOV] loadUserOnboardingProfile:", err);
+    return null;
+  }
 }

@@ -10,7 +10,7 @@ export type OnboardingSyncResult = { ok: true; synced: number; skipped?: boolean
  */
 export async function syncPendingOnboardingAfterAuth(): Promise<OnboardingSyncResult> {
   const raw = loadOnboardingState();
-  if (!raw || raw.v !== 4) {
+  if (!raw || raw.v !== 5) {
     return { ok: true, synced: 0, skipped: true };
   }
 

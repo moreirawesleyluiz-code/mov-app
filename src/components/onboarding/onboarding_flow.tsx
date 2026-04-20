@@ -1,16 +1,27 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { MovAppWelcomeBackdrop } from "@/components/auth/auth-screen";
+import {
+  clearRegisterCallbackStorage,
+  getRegisterCallbackAfterOnboarding,
+  ONBOARDING_SIGNUP_INTENT,
+  persistRegisterCallbackFromSearch,
+} from "@/lib/onboarding-signup-intent";
 import { ONBOARDING_STEPS } from "./onboarding-config";
-import { clearOnboardingState, loadOnboardingState, saveOnboardingState } from "./onboarding-persistence";
+import {
+  clearOnboardingState,
+  loadOnboardingState,
+  saveOnboardingState,
+  shouldOfferResume,
+} from "./onboarding-persistence";
 import type { OnboardingPersistedState } from "./onboarding-types";
 import {
-  AuthHandoffView,
   BirthdayStepView,
   CitySearchModal,
-  CountryStepView,
   InterstitialStepView,
+  MovWelcomeLogo,
   OnboardingLocationShell,
   OnboardingResumeModal,
   OnboardingWelcome,
@@ -20,7 +31,7 @@ import {
 
 function emptyState(): OnboardingPersistedState {
   return {
-    v: 4,
+    v: 5,
     stepIndex: 0,
     answers: {},
     city: { id: "sp", name: "São Paulo" },
@@ -28,9 +39,41 @@ function emptyState(): OnboardingPersistedState {
   };
 }
 
-export function OnboardingFlow() {
+/** Fallback com o mesmo “chassis” visual do welcome enquanto `useSearchParams` hidrata na navegação cliente. */
+function OnboardingFlowSearchParamsFallback() {
+  return (
+    <MovAppWelcomeBackdrop>
+      <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6">
+        <MovWelcomeLogo />
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center">
+          <p className="text-[15px] text-movApp-muted">Carregando…</p>
+        </div>
+      </div>
+    </MovAppWelcomeBackdrop>
+  );
+}
+
+/** Após a última pergunta, envia para o cadastro com o `callbackUrl` acordado (sessionStorage). */
+function RegisterAfterOnboardingRedirect() {
+  const router = useRouter();
+  useEffect(() => {
+    const cb = getRegisterCallbackAfterOnboarding();
+    clearRegisterCallbackStorage();
+    router.replace(`/register?callbackUrl=${encodeURIComponent(cb)}`);
+  }, [router]);
+  return (
+    <MovAppWelcomeBackdrop>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center px-6">
+        <p className="text-[15px] text-movApp-muted">A redirecionar…</p>
+      </div>
+    </MovAppWelcomeBackdrop>
+  );
+}
+
+function OnboardingFlowInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const signupIntentProcessedKey = useRef<string | null>(null);
 
   const [flowActive, setFlowActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -53,13 +96,6 @@ export function OnboardingFlow() {
   const currentStep = ONBOARDING_STEPS[effectiveStepIndex];
 
   useEffect(() => {
-    const saved = loadOnboardingState();
-    if (saved && (saved.stepIndex > 0 || Object.keys(saved.answers).length > 0)) {
-      setShowResumeModal(true);
-    }
-  }, []);
-
-  useEffect(() => {
     if (searchParams.get("step") === "location") {
       setFlowActive(true);
       setStepIndex(0);
@@ -71,7 +107,7 @@ export function OnboardingFlow() {
   useEffect(() => {
     if (!flowActive) return;
     const payload: OnboardingPersistedState = {
-      v: 4,
+      v: 5,
       stepIndex,
       answers,
       city,
@@ -92,12 +128,32 @@ export function OnboardingFlow() {
 
   const handleWelcomeStart = useCallback(() => {
     const saved = loadOnboardingState();
-    if (saved && (saved.stepIndex > 0 || Object.keys(saved.answers).length > 0)) {
+    if (saved && shouldOfferResume(saved)) {
       setShowResumeModal(true);
       return;
     }
     startFresh();
   }, [startFresh]);
+
+  /** "Criar conta" / links externos: mesma lógica que "Começar" (retomar ou novo fluxo). */
+  useEffect(() => {
+    if (searchParams.get("intent") !== ONBOARDING_SIGNUP_INTENT) {
+      signupIntentProcessedKey.current = null;
+      return;
+    }
+    const q = searchParams.toString();
+    if (signupIntentProcessedKey.current === q) return;
+    signupIntentProcessedKey.current = q;
+
+    persistRegisterCallbackFromSearch(searchParams.get("callbackUrl"));
+    const saved = loadOnboardingState();
+    if (saved && shouldOfferResume(saved)) {
+      setShowResumeModal(true);
+    } else {
+      startFresh();
+    }
+    router.replace("/");
+  }, [searchParams, router, startFresh]);
 
   const handleResumeContinue = useCallback(() => {
     const saved = loadOnboardingState();
@@ -150,16 +206,6 @@ export function OnboardingFlow() {
     [effectiveStepIndex, advance],
   );
 
-  const handleCountryConfirm = useCallback(
-    (countryCode: string) => {
-      const step = ONBOARDING_STEPS[effectiveStepIndex];
-      if (!step || step.kind !== "country") return;
-      setAnswers((a) => ({ ...a, [step.id]: countryCode }));
-      advance();
-    },
-    [effectiveStepIndex, advance],
-  );
-
   const handleBirthdayConfirm = useCallback(
     (isoDate: string) => {
       const step = ONBOARDING_STEPS[effectiveStepIndex];
@@ -203,7 +249,6 @@ export function OnboardingFlow() {
       {flowActive && currentStep?.kind === "location" && (
         <>
           <OnboardingLocationShell
-            cityName={city?.name || "São Paulo"}
             onBack={() => setFlowActive(false)}
             onContinue={handleLocationContinue}
             onOpenCityModal={() => {
@@ -227,8 +272,6 @@ export function OnboardingFlow() {
       {flowActive && currentStep?.kind === "single" && (
         <QuestionStepView
           step={currentStep}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
           selectedValue={answers[currentStep.id]}
           onSelect={handleSingleSelect}
           onBack={handleBack}
@@ -238,8 +281,6 @@ export function OnboardingFlow() {
       {flowActive && currentStep?.kind === "scale" && (
         <ScaleStepView
           step={currentStep}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
           selectedValue={answers[currentStep.id]}
           onSelect={handleScaleSelect}
           onBack={handleBack}
@@ -249,21 +290,7 @@ export function OnboardingFlow() {
       {flowActive && currentStep?.kind === "interstitial" && currentStep.interstitialVariant && (
         <InterstitialStepView
           variant={currentStep.interstitialVariant}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
-          section={currentStep.section}
           onNext={handleInterstitialNext}
-          onBack={handleBack}
-        />
-      )}
-
-      {flowActive && currentStep?.kind === "country" && (
-        <CountryStepView
-          step={currentStep}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
-          value={answers[currentStep.id]}
-          onConfirm={handleCountryConfirm}
           onBack={handleBack}
         />
       )}
@@ -271,22 +298,21 @@ export function OnboardingFlow() {
       {flowActive && currentStep?.kind === "birthday" && (
         <BirthdayStepView
           step={currentStep}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
           value={answers[currentStep.id]}
           onConfirm={handleBirthdayConfirm}
           onBack={handleBack}
         />
       )}
 
-      {flowActive && currentStep?.kind === "auth" && (
-        <AuthHandoffView
-          step={currentStep}
-          stepIndex={effectiveStepIndex}
-          totalSteps={totalSteps}
-          onBack={handleBack}
-        />
-      )}
+      {flowActive && currentStep?.kind === "auth" && <RegisterAfterOnboardingRedirect />}
     </div>
+  );
+}
+
+export function OnboardingFlow() {
+  return (
+    <Suspense fallback={<OnboardingFlowSearchParamsFallback />}>
+      <OnboardingFlowInner />
+    </Suspense>
   );
 }

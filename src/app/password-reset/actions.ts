@@ -7,10 +7,12 @@ import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/send-password-reset-email";
 
 const GENERIC_SUCCESS =
-  "Se existir uma conta com este e-mail, enviámos instruções para redefinir a senha.";
+  "Se existir uma conta com este e-mail, enviaremos instruções para redefinir a senha.";
 
+/** Base dos links de reset (servidor). Preferir APP_URL; alinhar com localhost:3456 em dev. */
 function appBaseUrl(): string {
   return (
+    process.env.APP_URL?.replace(/\/$/, "") ??
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
     process.env.AUTH_URL?.replace(/\/$/, "") ??
     "http://localhost:3456"
@@ -44,8 +46,17 @@ export async function requestPasswordReset(
   await new Promise((r) => setTimeout(r, 250));
 
   if (!user || user.deletedAt || user.role === "admin") {
+    if (!user) {
+      console.info("[MOV password reset] nenhum utilizador — resposta genérica (timing normalizado)");
+    } else if (user.deletedAt) {
+      console.info("[MOV password reset] utilizador inativo — resposta genérica");
+    } else {
+      console.info("[MOV password reset] conta admin — recuperação por e-mail desativada");
+    }
     return { ok: true, message: GENERIC_SUCCESS };
   }
+
+  console.info("[MOV password reset] utilizador encontrado", { userId: user.id });
 
   await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
@@ -60,17 +71,23 @@ export async function requestPasswordReset(
     },
   });
 
+  console.info("[MOV password reset] token guardado na BD", {
+    userId: user.id,
+    expiresAt: expiresAt.toISOString(),
+  });
+
   const url = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(raw)}`;
   try {
     await sendPasswordResetEmail(email, url);
   } catch (err) {
-    console.error("[MOV password reset] falha no envio SMTP:", err);
+    console.error("[MOV password reset] falha no envio (Resend/SMTP):", err);
     return {
       ok: false,
       message: "Não foi possível enviar o e-mail. Tente novamente mais tarde.",
     };
   }
 
+  console.info("[MOV password reset] fluxo de envio concluído para userId=", user.id);
   return { ok: true, message: GENERIC_SUCCESS };
 }
 
@@ -91,12 +108,15 @@ export async function resetPasswordWithToken(
   });
 
   if (!row || row.usedAt || row.user.deletedAt) {
+    console.info("[MOV password reset] reset falhou: token inválido, usado ou utilizador inativo");
     return { ok: false, message: "Este link é inválido ou já foi utilizado." };
   }
   if (row.expiresAt.getTime() < Date.now()) {
+    console.info("[MOV password reset] reset falhou: token expirado", { userId: row.userId });
     return { ok: false, message: "Este link expirou. Peça um novo e-mail de recuperação." };
   }
   if (row.user.role === "admin") {
+    console.info("[MOV password reset] reset falhou: conta admin");
     return { ok: false, message: "Este link não é válido." };
   }
 
@@ -113,5 +133,6 @@ export async function resetPasswordWithToken(
     }),
   ]);
 
+  console.info("[MOV password reset] senha atualizada e token invalidado", { userId: row.userId });
   return { ok: true, message: "Senha atualizada. Já pode entrar com a nova senha." };
 }

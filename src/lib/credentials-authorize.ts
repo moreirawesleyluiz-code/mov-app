@@ -19,6 +19,7 @@ export async function authorizeCredentials(credentials: {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return null;
   if (user.deletedAt) return null;
+  if (!user.passwordHash) return null;
   const ok = await bcrypt.compare(String(credentials.password), user.passwordHash);
   if (!ok) return null;
   return {

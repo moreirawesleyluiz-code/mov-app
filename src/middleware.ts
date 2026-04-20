@@ -38,7 +38,6 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/app", req.nextUrl.origin));
     }
     const res = NextResponse.next();
-    // Evita HTML antigo do admin servido de cache (dev/prod) — o utilizador deve ver sempre o painel atual.
     res.headers.set("Cache-Control", "private, no-store, must-revalidate");
     return res;
   }
@@ -49,7 +48,6 @@ export async function middleware(req: NextRequest) {
       login.searchParams.set("callbackUrl", `${path}${req.nextUrl.search}`);
       return NextResponse.redirect(login);
     }
-    // Área do cliente: contas admin não devem ficar em /app (evita sessão “certa” com UX errada).
     if (role === "admin") {
       return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
     }
