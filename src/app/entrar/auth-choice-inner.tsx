@@ -8,10 +8,14 @@ import { IconBack } from "@/components/onboarding/welcome-chrome";
 import { cn } from "@/lib/utils";
 
 /** Mesma regra que o login — destino seguro após auth. */
+function isSafeAppPath(raw: string): boolean {
+  return raw === "/app" || raw.startsWith("/app/");
+}
+
 function safeAppCallbackUrl(raw: string | null): string {
   const fallback = "/app";
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return fallback;
-  if (raw === "/admin" || raw.startsWith("/admin/")) return fallback;
+  if (!isSafeAppPath(raw)) return fallback;
   return raw;
 }
 

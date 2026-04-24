@@ -14,9 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { syncPendingOnboardingAfterAuth } from "@/lib/onboarding-client-sync";
 
+function isSafeAppPath(raw: string): boolean {
+  return raw === "/app" || raw.startsWith("/app/");
+}
+
 function safeCallbackForLink(raw: string | null): string | null {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
-  return raw;
+  return isSafeAppPath(raw) ? raw : null;
 }
 
 export function RegisterFormInner() {

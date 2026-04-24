@@ -5,7 +5,7 @@ export const ONBOARDING_SIGNUP_INTENT = "signup";
 const REGISTER_CB_STORAGE_KEY = "mov_onboarding_register_cb";
 
 function isSafeAppCallback(path: string): boolean {
-  return path.startsWith("/") && !path.startsWith("//") && path !== "/admin" && !path.startsWith("/admin/");
+  return (path === "/app" || path.startsWith("/app/")) && !path.startsWith("//");
 }
 
 /** Grava o destino pós-registo quando o utilizador entra pela landing com `callbackUrl` (ex.: vindo do login). */

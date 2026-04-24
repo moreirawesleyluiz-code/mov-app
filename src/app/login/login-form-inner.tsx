@@ -17,16 +17,20 @@ import { syncPendingOnboardingAfterAuth } from "@/lib/onboarding-client-sync";
 import { cn } from "@/lib/utils";
 
 /** Destinos permitidos após login do cliente — nunca área admin (admins usam /admin/login). */
+function isSafeAppPath(raw: string): boolean {
+  return raw === "/app" || raw.startsWith("/app/");
+}
+
 function safeAppCallbackUrl(raw: string | null): string {
   const fallback = "/app";
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return fallback;
-  if (raw === "/admin" || raw.startsWith("/admin/")) return fallback;
+  if (!isSafeAppPath(raw)) return fallback;
   return raw;
 }
 
 function safeCallbackForLink(raw: string | null): string | null {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
-  return raw;
+  return isSafeAppPath(raw) ? raw : null;
 }
 
 export function LoginFormInner() {
