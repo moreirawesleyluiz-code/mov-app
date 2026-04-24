@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "moreira.wesleyluz@gmail.com";
-const ADMIN_PASS = process.env.E2E_ADMIN_PASSWORD ?? "MovAdminLocal!1";
+const ADMIN_PASS = process.env.E2E_ADMIN_PASSWORD ?? "mov-local-test-1";
 
 test.describe("Admin fluxo real", () => {
   test("login → /admin lista → detalhe com Perfil MOV", async ({ page }) => {
@@ -15,7 +15,7 @@ test.describe("Admin fluxo real", () => {
     await page.getByRole("button", { name: /Entrar no painel/i }).click();
     await page.waitForURL(/\/admin\/?$/, { timeout: 60_000 });
 
-    await expect(page.getByRole("heading", { name: /Utilizadores/ })).toBeVisible();
+    await expect(page.getByTestId("admin-utilizadores-heading")).toHaveText("Utilizadores");
     expect(errors, errors.join("\n")).toEqual([]);
 
     const firstUser = page.locator('a[href^="/admin/users/"]').first();

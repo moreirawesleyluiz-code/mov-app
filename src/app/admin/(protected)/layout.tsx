@@ -1,27 +1,32 @@
 import Link from "next/link";
+import { AdminMainNav } from "@/components/admin/admin-main-nav";
 import { AdminSignOutButton } from "@/components/admin/admin-sign-out-button";
 import { requireAdminPage } from "@/lib/admin-auth";
 
-/** Shell com navegação mínima entre áreas admin (sem alterar rotas existentes). */
+/** Shell do painel: quatro áreas (Utilizadores, Mesas, Restaurantes, Montagem). */
 export default async function AdminProtectedLayout({ children }: { children: React.ReactNode }) {
   await requireAdminPage();
 
   return (
-    <div className="min-h-screen bg-movApp-bg p-6 text-movApp-ink [color-scheme:light]">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-movApp-border pb-4">
-          <nav className="flex flex-wrap gap-4 text-sm font-medium" aria-label="Áreas administrativas">
-            <Link href="/admin" className="text-movApp-ink hover:text-movApp-accent">
-              Utilizadores
+    <div className="min-h-screen bg-movApp-bg p-4 text-movApp-ink [color-scheme:light] sm:p-6">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-6 flex flex-col gap-4 border-b border-movApp-border pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-movApp-muted">Painel MOV</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/eventos" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
+              Eventos
             </Link>
-            <Link href="/admin/mesas" className="text-movApp-ink hover:text-movApp-accent">
-              Mesas
+            <Link href="/admin/denuncias" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
+              Denúncias
             </Link>
-          </nav>
-          <AdminSignOutButton />
+            <AdminSignOutButton />
+          </div>
         </header>
-        <main>{children}</main>
+        <main className="pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-24">{children}</main>
       </div>
+      <AdminMainNav />
     </div>
   );
 }

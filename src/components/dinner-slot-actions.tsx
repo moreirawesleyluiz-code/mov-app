@@ -64,12 +64,7 @@ export function DinnerSlotActions({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      {registered && demoFlow ? (
-        <span className="mb-0.5 max-w-[9rem] text-right text-[10px] leading-tight text-movApp-warn">
-          Demo: explorar fluxo
-        </span>
-      ) : null}
+    <div className="flex items-end">
       <button
         type="button"
         onClick={() => router.push(`/app/agenda/${eventId}/regiao`)}
@@ -82,11 +77,6 @@ export function DinnerSlotActions({
       >
         <ArrowIcon />
       </button>
-      {registered && demoFlow ? (
-        <span className="max-w-[7rem] text-right text-[10px] leading-tight text-movApp-muted">
-          {waitlist ? "Lista de espera" : "Reservado"} · preview
-        </span>
-      ) : null}
     </div>
   );
 }

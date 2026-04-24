@@ -16,7 +16,7 @@ import {
 } from "@/lib/jantar-display";
 import { isValidRegionKey } from "@/lib/sp-regions";
 
-export function JantarResumo({ eventId }: { eventId: string }) {
+export function JantarResumo({ eventId, headerTitle = "Jantar" }: { eventId: string; headerTitle?: string }) {
   const router = useRouter();
   const [draft, setDraft] = useState<JantarDraft | null>(null);
   const [loading, setLoading] = useState(false);
@@ -116,7 +116,7 @@ export function JantarResumo({ eventId }: { eventId: string }) {
             ←
           </span>
         </Link>
-        <h1 className="text-base font-semibold text-movApp-ink">Jantar</h1>
+        <h1 className="text-base font-semibold text-movApp-ink">{headerTitle}</h1>
       </div>
 
       <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-movApp-border">
@@ -142,7 +142,7 @@ export function JantarResumo({ eventId }: { eventId: string }) {
       <div className="mt-6 flex justify-center">
         <Link
           href={editHref}
-          className="h-12 rounded-full border border-movApp-border bg-movApp-subtle px-8 text-sm font-semibold text-movApp-ink transition hover:bg-movApp-border/40"
+          className="inline-flex h-12 items-center justify-center rounded-full border border-movApp-border bg-movApp-subtle px-8 text-center text-sm font-semibold leading-none text-movApp-ink transition hover:bg-movApp-border/40"
         >
           Editar minhas preferências
         </Link>

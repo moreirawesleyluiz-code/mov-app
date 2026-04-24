@@ -18,6 +18,45 @@ const REL_OPTIONS = [
 ];
 const COUNTRY_OPTIONS = ["Brasil", "Portugal", "Outro"];
 
+function formatBirthDateInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function formatBirthDateForDisplay(raw: string | undefined): string {
+  if (!raw) return "";
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(raw.trim());
+  if (br) return `${br[1]}/${br[2]}/${br[3]}`;
+  return "";
+}
+
+function parseBirthDateDisplayToIso(raw: string): string | null {
+  const value = raw.trim();
+  if (!value) return null;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (!Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) return null;
+  if (year < 1900 || year > 2100) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 type Props = {
   displayName: string;
   imageUrl: string | null;
@@ -39,7 +78,7 @@ export function ContaEditarForm({ displayName, imageUrl, city, extra }: Props) {
   const [relationship, setRelationship] = useState(extra.relationshipStatus ?? "");
   const [industry, setIndustry] = useState(extra.industry ?? "");
   const [birthCountry, setBirthCountry] = useState(extra.birthCountry ?? "Brasil");
-  const [birthDate, setBirthDate] = useState(extra.birthDate ?? "");
+  const [birthDate, setBirthDate] = useState(formatBirthDateForDisplay(extra.birthDate));
 
   useEffect(() => {
     return () => {
@@ -60,6 +99,12 @@ export function ContaEditarForm({ displayName, imageUrl, city, extra }: Props) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
+    const normalizedBirthDate = parseBirthDateDisplayToIso(birthDate);
+    if (birthDate.trim() && !normalizedBirthDate) {
+      setMsg("Data de nascimento inválida. Use o formato dd/mm/aaaa.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         await updateContaProfileExtra({
@@ -70,7 +115,7 @@ export function ContaEditarForm({ displayName, imageUrl, city, extra }: Props) {
           relationshipStatus: relationship || undefined,
           industry: industry.trim() || undefined,
           birthCountry: birthCountry || undefined,
-          birthDate: birthDate || undefined,
+          birthDate: normalizedBirthDate ?? undefined,
         });
         setMsg("Perfil atualizado.");
         router.refresh();
@@ -168,9 +213,13 @@ export function ContaEditarForm({ displayName, imageUrl, city, extra }: Props) {
           </Field>
           <Field label="Data de nascimento">
             <input
-              type="date"
+              type="text"
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
+              onChange={(e) => setBirthDate(formatBirthDateInput(e.target.value))}
+              inputMode="numeric"
+              placeholder="dd/mm/aaaa"
+              autoComplete="bday"
+              maxLength={10}
               className={inputContaClass}
             />
           </Field>

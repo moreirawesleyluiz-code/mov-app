@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { ExperienciasBackButton } from "@/components/experiencias-back-button";
-import { Button } from "@/components/ui/button";
+import { SpeedDatingPagamentoPanel } from "@/components/speed-dating-pagamento-panel";
 import { formatDinnerTime, formatDinnerWeekdayDate } from "@/lib/dinner-format";
 import { formatBRL } from "@/lib/planos-mov";
 import { SP_DINNER_REGIONS, isValidRegionKey } from "@/lib/sp-regions";
@@ -10,6 +10,7 @@ import {
   speedDatingDatasListHrefForEventType,
   speedDatingVariationLabel,
 } from "@/lib/speed-dating-public-events";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,16 @@ export default async function SpeedDatingPagamentoPage({ params, searchParams }:
 
   const ev = await getSpeedDatingEventById(eventId);
   if (!ev) notFound();
+
+  const session = await auth();
+  const userId = session?.user?.id;
+  const existingReg = userId
+    ? await prisma.eventRegistration.findUnique({
+        where: { userId_eventId: { userId, eventId: ev.id } },
+      })
+    : null;
+  const alreadyRegistered = existingReg?.status === "confirmed" || existingReg?.status === "waitlist";
+  const asaasEnabled = Boolean(process.env.ASAAS_API_KEY?.trim());
 
   const region = SP_DINNER_REGIONS.find((r) => r.id === regionKey);
   const regionLabel = region?.label ?? regionKey;
@@ -48,8 +59,12 @@ export default async function SpeedDatingPagamentoPage({ params, searchParams }:
       </div>
 
       <h1 className="font-display text-2xl font-semibold leading-tight tracking-[-0.02em] text-movApp-ink md:text-3xl">
-        Confirmação de pagamento
+        Pagamento
       </h1>
+      <p className="mt-2 text-sm text-movApp-muted">
+        Reveja o valor, preencha o CPF/CNPJ do pagador (exigido pelo Asaas) e gere o Pix. O ambiente (sandbox vs
+        produção) depende da chave definida em <code className="text-xs">ASAAS_API_KEY</code>.
+      </p>
 
       <div className="mt-5 space-y-4 rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm sm:mt-6">
         <div className="flex flex-col gap-1 border-b border-movApp-border/80 pb-4">
@@ -75,21 +90,30 @@ export default async function SpeedDatingPagamentoPage({ params, searchParams }:
           <p className="mt-1 text-sm font-medium text-movApp-ink">{regionLabel}</p>
         </div>
         <div className="flex items-baseline justify-between border-t border-movApp-border/80 pt-4">
-          <p className="text-sm font-medium text-movApp-muted">Total</p>
+          <p className="text-sm font-medium text-movApp-muted">Total a pagar</p>
           <p className="font-display text-2xl font-semibold tabular-nums text-movApp-gold">{formatBRL(ev.priceCents)}</p>
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3">
-        <Button type="button" disabled className="h-12 w-full text-base font-semibold" title="Integração de pagamento em breve">
-          Pagar agora
-        </Button>
-        <Link
-          href={speedDatingDatasListHrefForEventType(ev.type)}
-          className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-movApp-border bg-movApp-paper px-4 text-sm font-semibold text-movApp-ink transition hover:bg-movApp-subtle"
+      {ev.priceCents > 0 && !asaasEnabled ? (
+        <p
+          className="mt-4 rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-sm text-amber-950"
+          role="status"
         >
-          Escolher outra data
-        </Link>
+          O ambiente ainda não tem a chave Asaas. Define <code className="rounded bg-amber-100 px-1">ASAAS_API_KEY</code>{" "}
+          no <code className="rounded bg-amber-100 px-1">.env</code> (sandbox ou produção) para ativar o Pix.
+        </p>
+      ) : null}
+
+      <div className="mt-6">
+        <SpeedDatingPagamentoPanel
+          eventId={ev.id}
+          regionKey={regionKey}
+          priceCents={ev.priceCents}
+          asaasEnabled={asaasEnabled}
+          alreadyRegistered={Boolean(alreadyRegistered)}
+          listHref={speedDatingDatasListHrefForEventType(ev.type)}
+        />
       </div>
     </div>
   );

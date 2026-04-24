@@ -22,6 +22,7 @@ export async function softDeleteParticipant(userId: string) {
   ]);
   revalidatePath("/admin");
   revalidatePath("/admin/mesas");
+  revalidatePath("/admin/montagem");
   revalidatePath(`/admin/users/${userId}`);
 }
 

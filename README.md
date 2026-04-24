@@ -37,7 +37,7 @@ Aplicação web da **MOV** — comunidade de conexões reais (São Paulo). Inclu
    npm run dev
    ```
 
-   Abra [http://localhost:3000](http://localhost:3000).
+   Abra [http://localhost:3456](http://localhost:3456) (`npm run dev` usa a porta 3456).
 
 ## Estrutura principal
 

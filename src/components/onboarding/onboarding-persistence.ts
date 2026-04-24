@@ -37,7 +37,13 @@ function validatePersistedState(raw: unknown): OnboardingPersistedState | null {
   if (!Number.isInteger(stepIndex) || stepIndex < 0 || stepIndex > MAX_STEP_INDEX) return null;
   const answers = o.answers;
   if (typeof answers !== "object" || answers === null || Array.isArray(answers)) return null;
-  for (const v of Object.values(answers)) {
+  const normalizedAnswers = { ...(answers as Record<string, string>) };
+  /**
+   * Salvaguarda adicional: mesmo em payload v5, removemos qualquer resíduo de `id_country`
+   * para garantir que o passo eliminado nunca reaparece no fluxo/sync.
+   */
+  delete normalizedAnswers.id_country;
+  for (const v of Object.values(normalizedAnswers)) {
     if (typeof v !== "string") return null;
   }
   const cityRaw = o.city;
@@ -52,7 +58,7 @@ function validatePersistedState(raw: unknown): OnboardingPersistedState | null {
   return {
     v: 5,
     stepIndex,
-    answers: answers as Record<string, string>,
+    answers: normalizedAnswers,
     city,
     updatedAt,
   };

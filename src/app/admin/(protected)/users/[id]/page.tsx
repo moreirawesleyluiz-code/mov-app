@@ -33,6 +33,7 @@ export default async function AdminUserDetailPage({ params, searchParams }: Prop
       email: true,
       city: true,
       role: true,
+      isTestUser: true,
       createdAt: true,
       subscription: { select: { status: true, planCode: true } },
       onboardingAnswers: {
@@ -67,16 +68,27 @@ export default async function AdminUserDetailPage({ params, searchParams }: Prop
       <div>
         <h1 className="font-display text-2xl font-semibold text-movApp-ink">{user.name ?? "Sem nome"}</h1>
         <p className="mt-1 text-sm text-movApp-muted">{user.email}</p>
+        {user.isTestUser ? (
+          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Conta de teste (E2E/QA) — não entra na listagem operacional por predefinição.
+          </p>
+        ) : null}
         <p className="mt-2 text-sm text-movApp-ink">
           {user.city ?? "—"} · {user.role} · {user.subscription?.status ?? "—"} · cadastro{" "}
           {user.createdAt.toLocaleDateString("pt-BR")}
         </p>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/admin/montagem"
+            className="inline-flex rounded-lg border border-movApp-accent/40 bg-movApp-paper px-3 py-1.5 text-sm font-medium text-movApp-ink hover:bg-movApp-subtle"
+          >
+            Montagem (sugestões e candidatos)
+          </Link>
           <Link
             href="/admin/mesas"
             className="inline-flex rounded-lg border border-movApp-border px-3 py-1.5 text-sm font-medium text-movApp-ink hover:bg-movApp-subtle"
           >
-            Montagem de mesas
+            Mesas (lista operada)
           </Link>
         </div>
       </div>

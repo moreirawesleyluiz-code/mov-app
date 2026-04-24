@@ -3,7 +3,8 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { getPersistableQuestionStepIds } from "@/components/onboarding/onboarding-config";
 import { prisma } from "@/lib/prisma";
-import { deriveCompatibilityAxes, serializeCompatibilityAxes } from "@/lib/compatibility-axes";
+import { deriveCompatibilityAxes } from "@/lib/compatibility-axes";
+import { buildMovMatchingProfile } from "@/lib/mov-matching-profile";
 import { getSectionForQuestionId, resolveAnswerLabel } from "@/lib/onboarding-answer-meta";
 
 const bodySchema = z.object({
@@ -53,7 +54,11 @@ export async function POST(req: Request) {
   const cityName = city?.name ?? null;
   const answerMap = Object.fromEntries(filteredEntries) as Record<string, string>;
   const axesPayload = deriveCompatibilityAxes(answerMap);
-  const axesJson = serializeCompatibilityAxes(axesPayload);
+  const movMatchingProfile = buildMovMatchingProfile({ answers: answerMap, cityName });
+  const axesJson = JSON.stringify({
+    ...axesPayload,
+    movMatchingProfile,
+  });
 
   const rows = filteredEntries.map(([questionId, answerValue]) => ({
     userId,

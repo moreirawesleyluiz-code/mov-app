@@ -23,7 +23,6 @@ import {
   InterstitialStepView,
   MovWelcomeLogo,
   OnboardingLocationShell,
-  OnboardingResumeModal,
   OnboardingWelcome,
   QuestionStepView,
   ScaleStepView,
@@ -59,7 +58,12 @@ function RegisterAfterOnboardingRedirect() {
   useEffect(() => {
     const cb = getRegisterCallbackAfterOnboarding();
     clearRegisterCallbackStorage();
-    router.replace(`/register?callbackUrl=${encodeURIComponent(cb)}`);
+    const target = `/register?callbackUrl=${encodeURIComponent(cb)}`;
+    router.replace(target);
+    const fallback = window.setTimeout(() => {
+      window.location.assign(target);
+    }, 1400);
+    return () => window.clearTimeout(fallback);
   }, [router]);
   return (
     <MovAppWelcomeBackdrop>
@@ -79,7 +83,6 @@ function OnboardingFlowInner() {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [city, setCity] = useState<{ id: string; name: string } | null>({ id: "sp", name: "São Paulo" });
-  const [showResumeModal, setShowResumeModal] = useState(false);
   const [showCityModal, setShowCityModal] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
 
@@ -122,18 +125,28 @@ function OnboardingFlowInner() {
     setCity({ id: "sp", name: "São Paulo" });
     setStepIndex(0);
     setFlowActive(true);
-    setShowResumeModal(false);
     saveOnboardingState(emptyState());
   }, []);
 
-  const handleWelcomeStart = useCallback(() => {
+  /**
+   * Retoma silenciosamente se houver progresso válido; caso contrário, inicia do zero.
+   * Não abre modal de decisão para o utilizador.
+   */
+  const startFromSavedOrFresh = useCallback(() => {
     const saved = loadOnboardingState();
     if (saved && shouldOfferResume(saved)) {
-      setShowResumeModal(true);
+      setStepIndex(Math.min(saved.stepIndex, maxStepIndex));
+      setAnswers(saved.answers);
+      setCity(saved.city || { id: "sp", name: "São Paulo" });
+      setFlowActive(true);
       return;
     }
     startFresh();
-  }, [startFresh]);
+  }, [maxStepIndex, startFresh]);
+
+  const handleWelcomeStart = useCallback(() => {
+    startFromSavedOrFresh();
+  }, [startFromSavedOrFresh]);
 
   /** "Criar conta" / links externos: mesma lógica que "Começar" (retomar ou novo fluxo). */
   useEffect(() => {
@@ -146,36 +159,9 @@ function OnboardingFlowInner() {
     signupIntentProcessedKey.current = q;
 
     persistRegisterCallbackFromSearch(searchParams.get("callbackUrl"));
-    const saved = loadOnboardingState();
-    if (saved && shouldOfferResume(saved)) {
-      setShowResumeModal(true);
-    } else {
-      startFresh();
-    }
+    startFromSavedOrFresh();
     router.replace("/");
-  }, [searchParams, router, startFresh]);
-
-  const handleResumeContinue = useCallback(() => {
-    const saved = loadOnboardingState();
-    if (!saved) {
-      setShowResumeModal(false);
-      return;
-    }
-    setStepIndex(Math.min(saved.stepIndex, maxStepIndex));
-    setAnswers(saved.answers);
-    setCity(saved.city || { id: "sp", name: "São Paulo" });
-    setFlowActive(true);
-    setShowResumeModal(false);
-  }, [maxStepIndex]);
-
-  const handleResumeRestart = useCallback(() => {
-    clearOnboardingState();
-    setShowResumeModal(false);
-    setStepIndex(0);
-    setAnswers({});
-    setCity({ id: "sp", name: "São Paulo" });
-    setFlowActive(false);
-  }, []);
+  }, [searchParams, router, startFromSavedOrFresh]);
 
   const advance = useCallback(() => {
     setStepIndex((i) => Math.min(i + 1, maxStepIndex));
@@ -236,13 +222,6 @@ function OnboardingFlowInner() {
       {!flowActive && (
         <>
           <OnboardingWelcome onStart={handleWelcomeStart} />
-          {showResumeModal && (
-            <OnboardingResumeModal
-              onClose={() => setShowResumeModal(false)}
-              onContinue={handleResumeContinue}
-              onRestart={handleResumeRestart}
-            />
-          )}
         </>
       )}
 

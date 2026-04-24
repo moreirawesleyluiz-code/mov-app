@@ -47,6 +47,7 @@ export function OnboardingWelcome({ onStart }: WelcomeProps) {
     <MovAppWelcomeBackdrop>
       <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6">
         <MovWelcomeLogo />
+        <h1 className="mt-4 text-center font-display text-[1.35rem] tracking-[-0.02em] text-movApp-ink">MOV</h1>
 
         {/* Respiro entre logo e zona central — mantém o topo limpo */}
         <div
@@ -109,64 +110,6 @@ export function OnboardingWelcome({ onStart }: WelcomeProps) {
         </div>
       </div>
     </MovAppWelcomeBackdrop>
-  );
-}
-
-type ResumeProps = {
-  onClose: () => void;
-  onContinue: () => void;
-  onRestart: () => void;
-};
-
-export function OnboardingResumeModal({ onClose, onContinue, onRestart }: ResumeProps) {
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-end justify-center bg-movApp-ink/25 backdrop-blur-md sm:px-4"
-      role="presentation"
-      onClick={onClose}
-    >
-      <div
-        className="relative z-10 w-full max-w-md rounded-t-[1.25rem] border border-movApp-border bg-movApp-paper px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_48px_rgba(28,25,23,0.12)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-2 text-movApp-muted transition hover:bg-movApp-subtle hover:text-movApp-ink"
-            aria-label="Fechar"
-          >
-            <IconClose className="h-5 w-5" />
-          </button>
-        </div>
-        <h2 className="text-center font-display text-xl tracking-[-0.02em] text-movApp-ink">Continuar inscrição</h2>
-        <p className="mt-3 text-center text-[15px] leading-relaxed text-movApp-muted">
-          Há respostas salvas neste dispositivo. Continue de onde parou ou recomece do início.
-        </p>
-        <div className="mt-8 flex gap-3">
-          <button
-            type="button"
-            onClick={onRestart}
-            className={cn(
-              "min-h-[48px] flex-1 rounded-xl border border-movApp-border bg-movApp-paper py-3 text-sm font-semibold text-movApp-ink shadow-sm transition hover:bg-movApp-subtle",
-              focusRingWelcome,
-            )}
-          >
-            Reiniciar
-          </button>
-          <button
-            type="button"
-            onClick={onContinue}
-            className={cn(
-              "min-h-[48px] flex-1 rounded-xl bg-movApp-accent py-3 text-sm font-semibold text-white shadow-md shadow-movApp-accent/20 transition hover:bg-movApp-accentHover",
-              focusRingWelcome,
-            )}
-          >
-            Continuar
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -378,6 +321,7 @@ export function QuestionStepView({ step, selectedValue, onSelect, onBack }: Ques
               <button
                 key={opt.value}
                 type="button"
+                data-testid="onboarding-option"
                 onClick={() => onSelect(opt.value)}
                 className={cn(
                   "min-h-[52px] text-[15px] font-medium leading-snug transition active:scale-[0.99]",
@@ -430,9 +374,8 @@ export function ScaleStepView({ step, selectedValue, onSelect, onBack }: ScalePr
           </div>
 
           <div className="mt-10 flex flex-col gap-4 rounded-2xl border border-movApp-border bg-movApp-paper p-4 shadow-sm ring-1 ring-movApp-border/40 sm:p-5">
-            <div className="flex justify-between gap-3 border-b border-movApp-border/40 pb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-movApp-muted sm:text-[11px] sm:tracking-[0.14em]">
-              <span className="max-w-[46%] text-left leading-snug">{step.scaleLeftLabel}</span>
-              <span className="max-w-[46%] text-right leading-snug">{step.scaleRightLabel}</span>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-movApp-muted sm:text-[11px] sm:tracking-[0.14em]">
+              <span className="inline-block max-w-[70%] text-left leading-snug">{step.scaleLeftLabel}</span>
             </div>
             <div className="grid grid-cols-5 gap-2 sm:grid-cols-10 sm:gap-2.5">
               {levels.map((n) => (
@@ -450,6 +393,9 @@ export function ScaleStepView({ step, selectedValue, onSelect, onBack }: ScalePr
                   {n}
                 </button>
               ))}
+            </div>
+            <div className="text-right text-[10px] font-semibold uppercase tracking-[0.12em] text-movApp-muted sm:text-[11px] sm:tracking-[0.14em]">
+              <span className="inline-block max-w-[70%] leading-snug">{step.scaleRightLabel}</span>
             </div>
           </div>
         </div>
@@ -558,15 +504,52 @@ type BirthdayProps = {
   onBack: () => void;
 };
 
+function formatIsoToBr(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function formatBirthdayInput(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function parseBrBirthdayToIso(brDate: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(brDate);
+  if (!m) return null;
+
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (!Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) return null;
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1920) return null;
+
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  if (
+    probe.getUTCFullYear() !== year ||
+    probe.getUTCMonth() !== month - 1 ||
+    probe.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const iso = `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const max = new Date().toISOString().slice(0, 10);
+  if (iso > max) return null;
+  return iso;
+}
+
 export function BirthdayStepView({ step, value, onConfirm, onBack }: BirthdayProps) {
-  const [local, setLocal] = useState(value ?? "");
+  const [local, setLocal] = useState(value ? formatIsoToBr(value) : "");
 
   useEffect(() => {
-    setLocal(value ?? "");
+    setLocal(value ? formatIsoToBr(value) : "");
   }, [value]);
 
-  const max = new Date().toISOString().slice(0, 10);
-  const min = "1920-01-01";
+  const isoValue = parseBrBirthdayToIso(local);
 
   return (
     <MovAppWelcomeBackdrop>
@@ -578,23 +561,26 @@ export function BirthdayStepView({ step, value, onConfirm, onBack }: BirthdayPro
           </h2>
           {step.subtitle && <p className="mt-3 text-[15px] leading-relaxed text-movApp-muted">{step.subtitle}</p>}
 
-          <label className="mt-10 block">
+          <label className="mt-8 block">
             <span className={cn(authLabelClass, "mb-2 block")}>Data de nascimento</span>
             <input
-              type="date"
+              type="text"
               value={local}
-              min={min}
-              max={max}
-              onChange={(e) => setLocal(e.target.value)}
+              inputMode="numeric"
+              autoComplete="bday"
+              placeholder="dd/mm/aaaa"
+              maxLength={10}
+              onChange={(e) => setLocal(formatBirthdayInput(e.target.value))}
+              aria-label="Data de nascimento"
               className="min-h-[52px] w-full rounded-xl border border-movApp-border bg-movApp-paper px-4 py-3.5 text-[15px] text-movApp-ink shadow-[inset_0_1px_0_rgba(28,25,23,0.04)] transition [color-scheme:light] hover:border-movApp-border focus:border-movApp-accent focus:outline-none focus:ring-2 focus:ring-movApp-accent/40 focus:ring-offset-2 focus:ring-offset-movApp-bg"
             />
           </label>
 
           <button
             type="button"
-            disabled={!local}
-            onClick={() => local && onConfirm(local)}
-            aria-disabled={!local}
+            disabled={!isoValue}
+            onClick={() => isoValue && onConfirm(isoValue)}
+            aria-disabled={!isoValue}
             className={cn(
               "mt-6 min-h-[52px] w-full rounded-xl bg-movApp-accent py-4 text-base font-semibold text-white shadow-[0_10px_32px_rgba(196,92,74,0.28)] transition hover:bg-movApp-accentHover disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none",
               focusRingWelcome,

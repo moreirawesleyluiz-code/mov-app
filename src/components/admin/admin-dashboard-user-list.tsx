@@ -14,6 +14,7 @@ export type AdminDashboardUserRow = {
   email: string;
   city: string | null;
   role: string;
+  isTestUser?: boolean;
   subscription: { status: string; planCode: string } | null;
   onboardingAnswers: Array<{ questionId: string; answerValue: string }>;
 };
@@ -69,6 +70,9 @@ export function AdminDashboardUserList({ users, searchParams }: Props) {
                     {u.name ?? "—"}
                   </Link>
                   <div className="text-[11px] text-movApp-muted">{u.email}</div>
+                  {u.isTestUser ? (
+                    <div className="text-[10px] font-medium text-amber-800">Conta de teste (E2E/QA)</div>
+                  ) : null}
                   <Link
                     href={adminUserDetailHref(u.id, sp, "perfil-mov")}
                     className="text-[11px] font-medium text-movApp-accent hover:underline"

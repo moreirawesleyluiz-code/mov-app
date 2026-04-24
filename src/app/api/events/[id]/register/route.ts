@@ -54,6 +54,9 @@ export async function POST(req: Request, context: Params) {
   const dietaryTypesIn = Array.isArray(body.dietaryTypes)
     ? body.dietaryTypes.filter((x): x is string => typeof x === "string")
     : [];
+  const availabilitySlotsIn = Array.isArray(body.availabilitySlots)
+    ? body.availabilitySlots.filter((x): x is string => typeof x === "string")
+    : [];
 
   const session = await auth();
   const cookieStore = await cookies();
@@ -72,6 +75,7 @@ export async function POST(req: Request, context: Params) {
     let dinnerBudgetTiers: string | null = null;
     let dietary = false;
     let dietaryTypesStored: string | null = null;
+    let availabilitySlotsStored: string | null = null;
 
     if (event.memberOnly) {
       if (!regionKey || !isValidRegionKey(regionKey)) {
@@ -124,6 +128,10 @@ export async function POST(req: Request, context: Params) {
         dietaryTypesStored = JSON.stringify(types);
       }
 
+      if (availabilitySlotsIn.length > 0) {
+        availabilitySlotsStored = JSON.stringify([...new Set(availabilitySlotsIn.map((s) => s.trim()).filter(Boolean))]);
+      }
+
       if (session?.user?.id) {
         const sub = await prisma.subscription.findUnique({
           where: { userId: session.user.id },
@@ -158,12 +166,21 @@ export async function POST(req: Request, context: Params) {
       where: { eventId: id, status: { not: "cancelled" } },
     });
 
+    const speedDatingTypes = ["CLASSICO", "SENSORIAL", "EXCLUSIVO"] as const;
+    const isPublicSpeedDatingEvent =
+      !event.memberOnly && speedDatingTypes.includes(event.type as (typeof speedDatingTypes)[number]);
+    const regionKeyForEvent = event.memberOnly
+      ? (regionKey ?? null)
+      : isPublicSpeedDatingEvent && regionKey && isValidRegionKey(regionKey)
+        ? regionKey
+        : null;
     const baseData = {
-      regionKey: event.memberOnly ? (regionKey ?? null) : null,
+      regionKey: regionKeyForEvent,
       dinnerLanguages,
       dinnerBudgetTiers,
       dietaryRestrictions: event.memberOnly ? dietary : false,
       dietaryTypes: event.memberOnly ? dietaryTypesStored : null,
+      availabilitySlotsJson: event.memberOnly ? availabilitySlotsStored : null,
     };
 
     if (event.capacity && count >= event.capacity) {

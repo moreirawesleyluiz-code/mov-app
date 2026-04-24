@@ -49,10 +49,18 @@ export default async function ContaSegurancaPage() {
         </div>
       </div>
 
-      <p className="mt-4 text-xs leading-relaxed text-movApp-muted">
-        A redefinição de senha usa o fluxo público de recuperação (envio de e-mail). O e-mail de login continua o mesmo
-        até existir fluxo dedicado para alteração.
-      </p>
+      <div className="mt-4 rounded-2xl border border-movApp-border bg-movApp-paper p-4 shadow-sm ring-1 ring-movApp-border/50">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-movApp-muted">Segurança e suporte</p>
+        <p className="mt-2 text-sm leading-relaxed text-movApp-muted">
+          Reporte comportamento inadequado, desrespeito ou qualquer situação de risco com atendimento institucional.
+        </p>
+        <Link
+          href="/app/conta/seguranca/denuncia"
+          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+        >
+          Denunciar má conduta
+        </Link>
+      </div>
 
       <button
         type="button"
@@ -62,7 +70,6 @@ export default async function ContaSegurancaPage() {
       >
         Excluir minha conta
       </button>
-      <p className="mt-2 text-center text-[10px] text-movApp-muted">Pedido de exclusão: disponível em breve.</p>
     </div>
   );
 }

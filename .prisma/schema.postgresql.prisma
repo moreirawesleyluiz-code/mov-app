@@ -1,0 +1,311 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  /// Null para contas criadas apenas via OAuth (ex.: Google).
+  passwordHash String?
+  image        String?
+  bio          String?
+  city         String?  @default("São Paulo")
+  /// JSON opcional: campos extra do perfil no app (telefone, género, etc.)
+  appProfileJson String?
+  /// "user" | "admin" — apenas admin acede a /admin
+  role         String   @default("user")
+  /// Conta criada por E2E/Playwright/QA (domínio ou padrão conhecido) — excluir da listagem operacional
+  isTestUser   Boolean  @default(false)
+  /// Notas internas da equipa (área admin)
+  adminNotes   String?
+  /// Soft delete — participante inativado pela curadoria (não apaga histórico técnico)
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscription         Subscription?
+  registrations        EventRegistration[]
+  experienceFeedbacks  EventExperienceFeedback[]
+  safetyReportsCreated SafetyReport[] @relation("SafetyReportReporter")
+  safetyReportsAgainst SafetyReport[] @relation("SafetyReportReportedUser")
+  onboardingAnswers    OnboardingAnswer[]
+  compatibilityProfile CompatibilityProfile?
+  curatedTableMember   AdminCuratedTableMember?
+  passwordResetTokens  PasswordResetToken[]
+  asaasPayments         AsaasPayment[]
+
+  @@index([isTestUser, deletedAt, role])
+}
+
+/// Token único para redefinição de senha (hash guardado; uso único + expiração).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Respostas normalizadas do onboarding (uma linha por pergunta / usuário).
+model OnboardingAnswer {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId   String
+  section      String?
+  answerValue  String
+  answerLabel  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, questionId])
+  @@index([userId])
+  @@index([section])
+  @@index([questionId])
+}
+
+/// Placeholder para eixos de compatibilidade derivados no futuro (matching).
+model CompatibilityProfile {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  axesJson  String?
+  updatedAt DateTime @updatedAt
+}
+
+/// Assinatura Se Mov — comunidade ativa, agenda, movimentos
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("active") // active, canceled, past_due
+  planCode  String   @default("SE_MOV")
+  startedAt DateTime @default(now())
+  renewsAt  DateTime?
+  canceledAt DateTime?
+}
+
+model Event {
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  description  String?
+  type         String // CLASSICO, SENSORIAL, EXCLUSIVO, COMUNIDADE, ROLÊ
+  startsAt     DateTime
+  endsAt       DateTime?
+  venueName    String?
+  venueAddress String?
+  /// Preço em centavos (0 = incluso no Se Mov ou gratuito)
+  priceCents   Int      @default(0)
+  memberOnly   Boolean  @default(false)
+  capacity     Int?
+  imageUrl     String?
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  registrations EventRegistration[]
+  experienceFeedbacks EventExperienceFeedback[]
+  safetyReports SafetyReport[]
+  curatedTables   AdminCuratedTable[]
+  asaasPayments  AsaasPayment[]
+}
+
+/// Cobrança avulsa (ex.: Speed Dating) via Asaas; Pix como forma principal no MVP.
+model AsaasPayment {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId            String
+  event              Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  /** Zona de SP escolhida no fluxo (vai para a inscrição após o pagamento). */
+  regionKey          String
+  asaasCustomerId    String
+  /** Identificador da cobrança no Asaas (ex.: `pay_...`) */
+  asaasPaymentId     String   @unique
+  /** Status devolvido pelo Asaas (PENDING, RECEIVED, etc.) */
+  asaasStatus        String
+  valueCents         Int
+  /** Rastreio e conciliação: enviado como `externalReference` no Asaas */
+  externalReference  String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId, eventId])
+  @@index([asaasPaymentId])
+  @@index([asaasStatus])
+}
+
+/// Restaurante parceiro — inventário operacional para alocação de mesas.
+model PartnerRestaurant {
+  id        String   @id @default(cuid())
+  name      String
+  /// ativo | inativo (espelha `active` para filtros rápidos em UI)
+  statusLabel String @default("ativo")
+  /// restaurant | bar | experience_venue | other
+  partnerType String @default("restaurant")
+  /// Chave de região do fluxo jantar (ex.: pinheiros-vm), quando aplicável
+  regionKey String?
+  city        String?
+  neighborhood String?
+  address     String?
+  locationNotes String?
+  /// Ambiente predominante (texto curto: intimista, animado, formal…)
+  environmentType String?
+  /// Estilo da casa (texto curto)
+  houseStyle String?
+  /// JSON: tipos de experiência/evento que o espaço comporta (ex.: ["SE_MOV_JANTAR","CLASSICO"])
+  experienceTypesJson String?
+  /// JSON: tags de curadoria (ex.: ["primeiro-encontro","premium"])
+  curationTagsJson String?
+  /// JSON: descrição do público/perfis mais aderentes (texto livre estruturado)
+  audienceProfileJson String?
+  /// JSON: ["$","$$","$$$"]
+  priceTiersJson String
+  /// Ticket médio estimado (centavos), para curadoria / relatórios
+  estimatedTicketCents Int?
+  /// Lugares por mesa (máx. MOV = 6)
+  seatsPerTableMax Int @default(6)
+  /// Capacidade total de mesas simultâneas (curadoria)
+  tableCapacity    Int @default(10)
+  /// JSON: tipos dietéticos aceitos (ids de `DIETARY_OPTIONS`) ou ["*"] para todos
+  acceptsDietaryJson String?
+  /// alta | moderada | baixa — flexibilidade operacional para adaptar pratos
+  dietaryFlexibility String @default("moderada")
+  cuisineCategories String?
+  /// JSON: chaves de disponibilidade (ex.: ["quinta-noite"]) — alinhar reserva e parceiro
+  availabilityKeysJson String?
+  /// Opcional (IANA). Extensão futura: cruzar com hora local antes de comparar agenda; hoje a alocação usa só UTC do evento.
+  operationalTimezoneIana String?
+  /// JSON: agenda estruturada — ex.: {"slots":[{"dayOfWeek":4,"slotKey":"quinta-noite"}]}
+  scheduleJson String?
+  premiumLevel String @default("standard") // standard | classico | sensorial | exclusivo
+  /// 0–100: aderência declarada a mesas mais leves / conversa fluida
+  fitLightTables Int @default(55)
+  /// 0–100: aderência a mesas mais profundas
+  fitDeepTables Int @default(55)
+  /// 0–100: experiências premium
+  fitPremiumExperience Int @default(50)
+  /// 0–100: primeiro encontro / baixa pressão social
+  fitFirstEncounter Int @default(60)
+  /// 0–100: grupos mais extrovertidos / energia alta
+  fitExtrovertedGroup Int @default(55)
+  /// 0–100: grupos mais intimistas / contidos
+  fitIntimateGroup Int @default(55)
+  internalContact String?
+  operationalNotes String?
+  curadoriaNotes String?
+  active    Boolean  @default(true)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  curatedTables AdminCuratedTable[]
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status    String   @default("confirmed") // confirmed, waitlist, cancelled
+  /// Zona de SP escolhida no fluxo do jantar (ex.: pinheiros-vm)
+  regionKey String?
+  /// JSON: ["en","pt"]
+  dinnerLanguages     String?
+  /// JSON: ["$","$$","$$$"]
+  dinnerBudgetTiers   String?
+  dietaryRestrictions Boolean @default(false)
+  /// JSON: ["vegetariano","vegano",...] quando há restrições
+  dietaryTypes        String?
+  /// JSON: chaves de disponibilidade escolhidas pelo utilizador (ex.: ["quinta-noite"]) — opcional até o fluxo gravar
+  availabilitySlotsJson String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+/// Mesas de curadoria admin (sugestão + edição manual). Não confundir com Event/mesa de produto.
+model AdminCuratedTable {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+  status    String   @default("draft") // draft | finalized
+  /// Rodada/evento ao qual esta mesa está associada na curadoria (opcional)
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  partnerRestaurantId String?
+  partnerRestaurant     PartnerRestaurant? @relation(fields: [partnerRestaurantId], references: [id], onDelete: SetNull)
+  /// JSON: explicabilidade e snapshot de scores na última sugestão automática
+  allocationMetaJson String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members AdminCuratedTableMember[]
+
+  @@index([eventId, partnerRestaurantId])
+}
+
+model AdminCuratedTableMember {
+  id        String   @id @default(cuid())
+  tableId   String
+  table     AdminCuratedTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Se true, sugestões automáticas não removem este vínculo
+  pinned    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([tableId])
+}
+
+/// Feedback institucional da experiência Se Mov (sempre vinculado a usuário + evento participado).
+model EventExperienceFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  rating    Int?
+  answersJson String?
+  comments  String?
+  status    String   @default("submitted") // submitted | reviewed | archived
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, eventId])
+  @@index([eventId, createdAt])
+}
+
+/// Reporte de segurança/confiança enviado por participante autenticado.
+model SafetyReport {
+  id                String   @id @default(cuid())
+  reporterUserId    String
+  reporterUser      User     @relation("SafetyReportReporter", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  eventId           String?
+  event             Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  reportedUserId    String?
+  reportedUser      User?    @relation("SafetyReportReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedPersonRef String?
+  /// JSON array de links opcionais enviados como evidência
+  evidenceLinksJson String?
+  category          String   // comportamento_inadequado | assedio | desrespeito | seguranca | outro
+  description       String
+  status            String   @default("open") // open | triaged | closed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([reporterUserId, createdAt])
+  @@index([eventId])
+  @@index([status])
+}

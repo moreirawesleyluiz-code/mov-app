@@ -4,19 +4,14 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { generateResetToken, hashResetToken } from "@/lib/password-reset-crypto";
 import { prisma } from "@/lib/prisma";
+import { getPublicAppOrigin } from "@/lib/public-app-url";
 import { sendPasswordResetEmail } from "@/lib/send-password-reset-email";
 
 const GENERIC_SUCCESS =
   "Se existir uma conta com este e-mail, enviaremos instruções para redefinir a senha.";
 
-/** Base dos links de reset (servidor). Preferir APP_URL; alinhar com localhost:3456 em dev. */
 function appBaseUrl(): string {
-  return (
-    process.env.APP_URL?.replace(/\/$/, "") ??
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    process.env.AUTH_URL?.replace(/\/$/, "") ??
-    "http://localhost:3456"
-  );
+  return getPublicAppOrigin();
 }
 
 const requestSchema = z.object({

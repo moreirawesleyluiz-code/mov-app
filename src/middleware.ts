@@ -8,6 +8,7 @@ const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
  * - `/app/*`: sessão obrigatória (cliente).
  * - `/admin` e subrotas exceto `/admin/login`: JWT com `role === "admin"` (Edge: `getToken` lê o cookie; `req.auth.user.role` pode falhar).
  * - `/admin/login`: público; se já autenticado como admin, redireciona para `/admin`.
+ * - `/app/*`: sessão obrigatória; admins podem navegar no app (validação de eventos e UX).
  */
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -48,9 +49,7 @@ export async function middleware(req: NextRequest) {
       login.searchParams.set("callbackUrl", `${path}${req.nextUrl.search}`);
       return NextResponse.redirect(login);
     }
-    if (role === "admin") {
-      return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
-    }
+    /** Admins podem abrir `/app/*` para validar o mesmo ecrã que o utilizador (eventos, agenda, etc.). */
     return NextResponse.next();
   }
 

@@ -4,6 +4,7 @@ import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { SP_DINNER_REGIONS } from "@/lib/sp-regions";
 import { prisma } from "@/lib/prisma";
 import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
+import { deriveSeMovEventKind, seMovEventKindLabel } from "@/lib/se-mov-event-kind";
 
 type Params = { params: Promise<{ eventId: string }> };
 
@@ -38,6 +39,7 @@ export default async function JantarRegiaoPage({ params }: Params) {
     <JantarRegionForm
       eventId={event.id}
       regions={SP_DINNER_REGIONS}
+      headerTitle={seMovEventKindLabel(deriveSeMovEventKind(event))}
     />
   );
 }

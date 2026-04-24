@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { AdminDashboardUserList } from "@/components/admin/admin-dashboard-user-list";
 import { getOperationalState, type AdminOperationalState } from "@/lib/admin-user-state";
+import { buildMovMatchingProfile, parseStoredMovMatchingProfile } from "@/lib/mov-matching-profile";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -46,8 +47,16 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
   const state = firstString(sp.state);
   const from = firstString(sp.from);
   const to = firstString(sp.to);
+  const ageBand = firstString(sp.ageBand);
+  const sector = firstString(sp.sector);
+  const energyBand = firstString(sp.energyBand);
+  const includeTest = firstString(sp.includeTest) === "1";
+  const allowListTestInAdmin =
+    process.env.NODE_ENV === "development" || process.env.MOV_ADMIN_LIST_TEST_USERS === "1";
+  const listTestUsers = includeTest && allowListTestInAdmin;
 
   const where: Prisma.UserWhereInput = { deletedAt: null };
+  if (!listTestUsers) where.isTestUser = false;
   if (city && city !== "__all__") where.city = city;
   if (role === "user" || role === "admin") where.role = role;
 
@@ -80,14 +89,20 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
       email: true,
       city: true,
       role: true,
+      isTestUser: true,
       createdAt: true,
       subscription: { select: { status: true, planCode: true } },
       onboardingAnswers: { select: { questionId: true, answerValue: true } },
+      compatibilityProfile: { select: { axesJson: true } },
     },
   });
 
   const cities = await prisma.user.findMany({
-    where: { deletedAt: null, city: { not: null } },
+    where: {
+      deletedAt: null,
+      city: { not: null },
+      ...(!listTestUsers ? { isTestUser: false } : {}),
+    },
     select: { city: true },
     distinct: ["city"],
     orderBy: { city: "asc" },
@@ -116,37 +131,67 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
     });
   }
 
+  if ((ageBand && ageBand !== "__all__") || (sector && sector !== "__all__") || (energyBand && energyBand !== "__all__")) {
+    filtered = filtered.filter((u) => {
+      const derived =
+        parseStoredMovMatchingProfile(u.compatibilityProfile?.axesJson) ??
+        buildMovMatchingProfile({
+          answers: Object.fromEntries(u.onboardingAnswers.map((a) => [a.questionId, a.answerValue])) as Record<string, string>,
+          cityName: u.city,
+        });
+      if (ageBand && ageBand !== "__all__" && derived.ageBand !== ageBand) return false;
+      if (sector && sector !== "__all__" && (derived.sector ?? "") !== sector) return false;
+      if (energyBand && energyBand !== "__all__" && derived.energyBand !== energyBand) return false;
+      return true;
+    });
+  }
+
+  const sectors = [...new Set(users.map((u) => {
+    const derived =
+      parseStoredMovMatchingProfile(u.compatibilityProfile?.axesJson) ??
+      buildMovMatchingProfile({
+        answers: Object.fromEntries(u.onboardingAnswers.map((a) => [a.questionId, a.answerValue])) as Record<string, string>,
+        cityName: u.city,
+      });
+    return derived.sector;
+  }).filter(Boolean))].sort();
+
   return (
     <div>
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-movApp-ink">MOV Admin</h1>
-      <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-movApp-muted">
-        <span>Dashboard operacional</span>
-        <Link href="/admin/mesas" className="font-medium text-movApp-accent hover:underline">
-          Montagem de mesas
-        </Link>
-      </p>
-      <p className="mt-3 max-w-3xl text-xs leading-relaxed text-movApp-muted">
-        Onboarding completo = 28 respostas esperadas. Montagem de mesa e texto de evento são sugestões administrativas
-        (heurísticas), não regras automáticas.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1
+          className="font-display text-2xl font-semibold tracking-tight text-movApp-ink"
+          data-testid="admin-utilizadores-heading"
+        >
+          Utilizadores
+        </h1>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/eventos" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
+            Gerir eventos
+          </Link>
+          <Link href="/admin/denuncias" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
+            Ver denúncias
+          </Link>
+        </div>
+      </div>
 
-      <form method="get" action="/admin" className="mt-6 space-y-4 rounded-xl border border-movApp-border bg-movApp-paper p-4">
+      <form method="get" action="/admin" className="mt-5 space-y-4 rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-sm">
-            <span className="text-movApp-muted">Busca (nome/e-mail/cidade)</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Busca (nome/e-mail/cidade)</span>
             <input
               type="search"
               name="q"
               defaultValue={q ?? ""}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             />
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Cidade</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Cidade</span>
             <select
               name="city"
               defaultValue={city ?? "__all__"}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             >
               <option value="__all__">Todas</option>
               {cities.map((c) => (
@@ -156,24 +201,24 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               ))}
             </select>
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Role</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Role</span>
             <select
               name="role"
               defaultValue={role ?? "__all__"}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             >
               <option value="__all__">Todas</option>
               <option value="user">user</option>
               <option value="admin">admin</option>
             </select>
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Assinatura (estado)</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Assinatura (estado)</span>
             <select
               name="sub"
               defaultValue={sub ?? "__all__"}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             >
               <option value="__all__">Todas</option>
               <option value="none">Sem assinatura</option>
@@ -184,12 +229,12 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
           </label>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-sm">
-            <span className="text-movApp-muted">Estado onboarding</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Estado onboarding</span>
             <select
               name="state"
               defaultValue={state ?? "__all__"}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             >
               <option value="__all__">Todos</option>
               <option value="no_answers">Sem respostas</option>
@@ -197,12 +242,54 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               <option value="ready">Pronto para curadoria</option>
             </select>
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Plano (assinatura)</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Faixa etária</span>
+            <select
+              name="ageBand"
+              defaultValue={ageBand ?? "__all__"}
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
+            >
+              <option value="__all__">Todas</option>
+              <option value="18_24">18-24</option>
+              <option value="25_34">25-34</option>
+              <option value="35_44">35-44</option>
+              <option value="45_plus">45+</option>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Setor</span>
+            <select
+              name="sector"
+              defaultValue={sector ?? "__all__"}
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
+            >
+              <option value="__all__">Todos</option>
+              {sectors.map((s) => (
+                <option key={s} value={s ?? ""}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Energia social</span>
+            <select
+              name="energyBand"
+              defaultValue={energyBand ?? "__all__"}
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
+            >
+              <option value="__all__">Todas</option>
+              <option value="calmo">Calmo</option>
+              <option value="equilibrado">Equilibrado</option>
+              <option value="expansivo">Expansivo</option>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Plano (assinatura)</span>
             <select
               name="mov"
               defaultValue={mov ?? "__all__"}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             >
               <option value="__all__">Todos</option>
               {planCodes.map((p) => (
@@ -212,25 +299,31 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
               ))}
             </select>
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Cadastro desde</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Cadastro desde</span>
             <input
               type="date"
               name="from"
               defaultValue={from ?? ""}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             />
           </label>
-          <label className="text-sm">
-            <span className="text-movApp-muted">Cadastro até</span>
+          <label className="text-xs font-medium text-movApp-muted">
+            <span>Cadastro até</span>
             <input
               type="date"
               name="to"
               defaultValue={to ?? ""}
-              className="mt-1 w-full rounded-lg border border-movApp-border bg-white px-3 py-2"
+              className="mt-1 h-10 w-full rounded-lg border border-movApp-border bg-white px-3 text-sm"
             />
           </label>
         </div>
+        {allowListTestInAdmin ? (
+          <label className="flex items-center gap-2 text-xs text-movApp-muted">
+            <input type="checkbox" name="includeTest" value="1" defaultChecked={includeTest} className="h-4 w-4" />
+            Incluir contas de teste (E2E/QA) na tabela
+          </label>
+        ) : null}
         <div className="flex gap-2">
           <button type="submit" className="rounded-lg bg-movApp-accent px-4 py-2 text-sm font-medium text-white">
             Aplicar

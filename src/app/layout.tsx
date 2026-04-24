@@ -2,12 +2,10 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
+import { getPublicAppOrigin } from "@/lib/public-app-url";
 import { Providers } from "./providers";
 
-const appOrigin =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.AUTH_URL ??
-  "http://localhost:3456";
+const appOrigin = getPublicAppOrigin();
 
 const dmSans = DM_Sans({
   subsets: ["latin"],

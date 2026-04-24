@@ -16,7 +16,8 @@ test.describe("Login — interatividade (cliques e navegação)", () => {
 
     await page.goto("/login?callbackUrl=/app");
     await page.getByRole("link", { name: "Criar conta" }).click();
-    await expect(page).toHaveURL(/intent=signup/);
+    await expect(page).toHaveURL(/^http:\/\/[^/]+\/(\?intent=signup.*)?$/);
+    await expect(page.getByRole("button", { name: "Mudar minha cidade" })).toBeVisible();
 
     await page.goto("/login");
     await page.getByRole("link", { name: "Esqueci minha senha" }).click();

@@ -4,6 +4,7 @@ import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { isValidRegionKey } from "@/lib/sp-regions";
 import { prisma } from "@/lib/prisma";
 import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
+import { deriveSeMovEventKind, seMovEventKindLabel } from "@/lib/se-mov-event-kind";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -44,5 +45,11 @@ export default async function JantarPreferenciasPage({ params, searchParams }: P
     redirect("/app/agenda");
   }
 
-  return <JantarPreferenciasForm eventId={event.id} regionKey={regionKey} />;
+  return (
+    <JantarPreferenciasForm
+      eventId={event.id}
+      regionKey={regionKey}
+      headerTitle={seMovEventKindLabel(deriveSeMovEventKind(event))}
+    />
+  );
 }

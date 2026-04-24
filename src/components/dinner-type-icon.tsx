@@ -4,7 +4,7 @@ import type { SeMovEventKind } from "@/lib/se-mov-event-kind";
 export function DinnerTypeIcon({ kind }: { kind: SeMovEventKind }) {
   if (kind === "cafe") {
     return (
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-200/80" aria-hidden>
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-violet-50 ring-1 ring-violet-200/90" aria-hidden>
         <CoffeeIcon />
       </div>
     );
@@ -12,14 +12,14 @@ export function DinnerTypeIcon({ kind }: { kind: SeMovEventKind }) {
 
   if (kind === "exodo") {
     return (
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-50 ring-1 ring-sky-200/80" aria-hidden>
-        <ExodoIcon />
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200/90" aria-hidden>
+        <DrinksIcon />
       </div>
     );
   }
 
   return (
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-movApp-accentSoft ring-1 ring-movApp-accent/25" aria-hidden>
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-50 ring-1 ring-orange-200/90" aria-hidden>
       <ForkKnifeIcon />
     </div>
   );
@@ -29,11 +29,12 @@ function ForkKnifeIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path
-        d="M11 3v9c0 1.5-.5 2-2 2M11 3c0 2.5 2 4.5 4 4.5M11 3c0-2 2-3 4-3M15 21v-6M19 11V3M19 3c-1.5 0-3 .5-3 2v6"
+        d="M6.5 3v6.8M9.4 3v6.8M6.5 6.5h2.9M8 9.8v11.2M14.8 3v10M14.8 13c1.8 0 2.8-1.1 2.8-3.1V3M14.8 13V21"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="2"
         strokeLinecap="round"
-        className="text-movApp-accent"
+        strokeLinejoin="round"
+        className="text-rose-600"
       />
     </svg>
   );
@@ -48,22 +49,22 @@ function CoffeeIcon() {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-amber-700"
+        className="text-violet-600"
       />
     </svg>
   );
 }
 
-function ExodoIcon() {
+function DrinksIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path
-        d="M5 18c1.8-2.1 3.7-3.2 5.8-3.2S14.8 15.9 17 18M8.5 10.5l2.3 2.3 4.7-4.8M4 20h16"
+        d="M5 4h6l-3 4v8.5a1.5 1.5 0 0 0 .4 1l1.1 1.3M17 4l2.2 3.5a1.5 1.5 0 0 1 .2.8V18m-5-14h5m-4 14h5"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-sky-700"
+        className="text-emerald-600"
       />
     </svg>
   );

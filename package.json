@@ -11,12 +11,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:matching": "tsx scripts/validate-matching.ts",
     "test:e2e": "playwright test",
     "db:generate": "prisma generate",
+    "db:generate:prod": "node scripts/prepare-prisma-postgres-schema.cjs && prisma generate --schema .prisma/schema.postgresql.prisma",
     "db:migrate": "prisma migrate deploy",
+    "db:migrate:prod": "node scripts/prepare-prisma-postgres-schema.cjs && prisma migrate deploy --schema .prisma/schema.postgresql.prisma",
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "db:clear-events": "tsx scripts/clear-events.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { isAutomationTestAccountEmail } from "@/lib/mov-test-user-email";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
@@ -31,11 +32,13 @@ export async function POST(req: Request) {
       );
     }
     const passwordHash = await bcrypt.hash(password, 12);
+    const isTestUser = isAutomationTestAccountEmail(normalized);
     await prisma.user.create({
       data: {
         name: name.trim(),
         email: normalized,
         passwordHash,
+        isTestUser,
       },
     });
     return NextResponse.json({ ok: true });

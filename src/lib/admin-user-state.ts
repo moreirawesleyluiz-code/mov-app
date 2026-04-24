@@ -4,7 +4,8 @@
  * Definido aqui sem importar `components/onboarding` para o RSC do admin não puxar essa árvore de módulos
  * (evita falhas de chunk / `undefined` em fábricas webpack no browser).
  */
-export const EXPECTED_ONBOARDING_ANSWERS = 28;
+/** Após remoção de `id_country`, a jornada persistível passou a 27 respostas. */
+export const EXPECTED_ONBOARDING_ANSWERS = 27;
 
 export type AdminOperationalState = "no_answers" | "incomplete" | "ready";
 

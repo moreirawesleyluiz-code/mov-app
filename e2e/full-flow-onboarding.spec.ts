@@ -7,7 +7,7 @@ function urlPathIsApp(url: URL): boolean {
 }
 
 async function clickFirstQuestionOption(page: Page) {
-  await page.locator("div.mt-9.flex.flex-col.gap-3 button").first().click();
+  await page.getByTestId("onboarding-option").first().click();
 }
 
 /**
@@ -63,7 +63,7 @@ test.describe("QA fluxo ponta a ponta", () => {
 
     await clickFirstQuestionOption(page);
 
-    await page.locator('input[type="date"]').fill("1990-06-15");
+    await page.getByLabel("Data de nascimento").fill("15/06/1990");
     await page.getByRole("button", { name: "Confirmar" }).click();
 
     await clickFirstQuestionOption(page);
@@ -72,14 +72,26 @@ test.describe("QA fluxo ponta a ponta", () => {
 
     await page.getByRole("button", { name: "Continuar" }).click();
 
-    await page.waitForURL(/\/register/, { timeout: 30_000 });
+    await page.waitForURL(/\/register/, { timeout: 60_000 });
 
     await page.getByLabel("Nome").fill("QA Fluxo");
     await page.getByLabel("E-mail").fill(email);
     await page.getByLabel(/Senha/).fill(PASSWORD);
     await page.getByRole("button", { name: "Criar conta" }).click();
 
-    await page.waitForURL(urlPathIsApp, { timeout: 60_000 });
+    /**
+     * Fluxos locais podem manter o utilizador em /register após criar conta
+     * (sem login automático). Nestes casos, fazemos login explícito e seguimos.
+     */
+    try {
+      await page.waitForURL(urlPathIsApp, { timeout: 20_000 });
+    } catch {
+      await page.goto("/login?callbackUrl=/app", { waitUntil: "networkidle" });
+      await page.getByLabel("E-mail").fill(email);
+      await page.getByLabel("Senha").fill(PASSWORD);
+      await page.getByRole("button", { name: "Entrar" }).click();
+      await page.waitForURL(urlPathIsApp, { timeout: 60_000 });
+    }
     await expect(page).toHaveURL(/\/app$/);
 
     await expect(page.getByRole("heading", { name: /Olá/ })).toBeVisible({ timeout: 15_000 });

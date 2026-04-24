@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { getPublicContactEmail, getPublicSupportEmail } from "@/lib/mov-brand-public";
 import { buildSignupOnboardingHref } from "@/lib/onboarding-signup-intent";
 
 export function SiteFooter() {
+  const contact = getPublicContactEmail();
+  const support = getPublicSupportEmail();
   return (
     <footer className="border-t border-mov-border bg-mov-bg">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -36,6 +39,15 @@ export function SiteFooter() {
               <Link href="/diretrizes" className="text-mov-muted hover:text-mov-cream">
                 Diretrizes
               </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="font-medium text-mov-cream">Contacto</span>
+              <a href={`mailto:${contact}`} className="text-mov-muted hover:text-mov-cream">
+                {contact}
+              </a>
+              <a href={`mailto:${support}`} className="text-mov-muted hover:text-mov-cream">
+                {support}
+              </a>
             </div>
           </div>
         </div>

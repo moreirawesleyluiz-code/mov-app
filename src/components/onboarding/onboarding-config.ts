@@ -269,7 +269,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     kind: "birthday",
     section: "Identidade",
     title: "Quando é seu aniversário?",
-    subtitle: "Usamos para combinar faixas etárias nas mesas, com discrição.",
   },
   {
     id: "id_gender",

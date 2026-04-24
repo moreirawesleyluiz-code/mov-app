@@ -14,6 +14,7 @@ export const DIETARY_OPTIONS = [
   { id: "vegetariano" as const, label: "Vegetariano" },
   { id: "vegano" as const, label: "Vegano" },
   { id: "sem_gluten" as const, label: "Sem glúten" },
+  { id: "sem_lactose" as const, label: "Sem lactose" },
   { id: "halal" as const, label: "Halal" },
   { id: "kosher" as const, label: "Kosher" },
 ];

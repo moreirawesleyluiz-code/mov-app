@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ContaAvatar } from "@/components/conta/conta-avatar";
 import { ContaMenuRow } from "@/components/conta/conta-menu-row";
 import { ContaSairRow } from "@/components/conta/conta-sair-row";
-import { ChevronRightIcon } from "@/components/conta/conta-icons";
 import { parseAppProfileExtra, splitDisplayName } from "@/lib/app-profile-extra";
 import { prisma } from "@/lib/prisma";
 
@@ -64,13 +62,6 @@ export default async function ContaPage() {
       <div className="flex flex-col items-center pt-2">
         <ContaAvatar name={headlineName} imageUrl={user.image} size="xl" />
         <h1 className="mt-4 text-center font-display text-2xl tracking-tight text-movApp-ink sm:text-3xl">{headlineName}</h1>
-        <Link
-          href="/app/conta/editar"
-          className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-movApp-accent hover:underline"
-        >
-          Editar perfil
-          <ChevronRightIcon className="h-4 w-4" />
-        </Link>
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-3">
@@ -83,7 +74,6 @@ export default async function ContaPage() {
           <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-movApp-muted">Pessoas encontradas</p>
         </div>
       </div>
-      <p className="mt-2 text-center text-[10px] text-movApp-muted">Indicador de pessoas: em breve no produto.</p>
 
       <div className="mt-8 space-y-3">
         <ContaMenuRow href="/app/conta/editar" label="Conta" description="Dados pessoais" />
@@ -92,7 +82,11 @@ export default async function ContaPage() {
           label="Assinatura e pagamentos"
           description={sub?.status === "active" ? "Se Mov ativa" : "Ver estado da assinatura"}
         />
-        <ContaMenuRow href="/app/conta/seguranca" label="Login e segurança" description="E-mail e senha" />
+        <ContaMenuRow
+          href="/app/conta/seguranca"
+          label="Login e segurança"
+          description="E-mail, senha e canal de denúncia"
+        />
       </div>
 
       <div className="mt-6">

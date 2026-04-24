@@ -1,10 +1,12 @@
 import nodemailer from "nodemailer";
+import { getPublicSupportEmail } from "@/lib/mov-brand-public";
 
 const SUBJECT = "Redefinir senha — MOV";
 
 function buildBodies(resetUrl: string): { text: string; html: string } {
-  const text = `Para definir uma nova senha, abra este link (válido por 1 hora):\n\n${resetUrl}\n\nSe não pediu este e-mail, ignore.`;
-  const html = `<p>Para definir uma nova senha, use o link abaixo (válido por 1 hora):</p><p><a href="${escapeHtmlAttr(resetUrl)}">${escapeHtml(resetUrl)}</a></p><p>Se não pediu este e-mail, ignore.</p>`;
+  const help = getPublicSupportEmail();
+  const text = `Para definir uma nova senha, abra este link (válido por 1 hora):\n\n${resetUrl}\n\nSe não pediu este e-mail, ignore.\n\nDúvidas: ${help}`;
+  const html = `<p>Para definir uma nova senha, use o link abaixo (válido por 1 hora):</p><p><a href="${escapeHtmlAttr(resetUrl)}">${escapeHtml(resetUrl)}</a></p><p>Se não pediu este e-mail, ignore.</p><p style="margin-top:1rem;font-size:14px;color:#555">Dúvidas: <a href="mailto:${escapeHtmlAttr(help)}">${escapeHtml(help)}</a></p>`;
   return { text, html };
 }
 

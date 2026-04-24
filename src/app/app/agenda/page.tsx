@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { getSeMovPublishedFutureEvents, getUserEventRegistrations } from "@/lib/se-mov-agenda-data";
 import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
 
+/** Sempre dados frescos (datas Se Mov vêm do `Event` publicado). */
+export const dynamic = "force-dynamic";
+
 export default async function AgendaPage() {
   const { userId } = await requireAgendaSeMovAccess();
 

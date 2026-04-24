@@ -3,6 +3,7 @@ import { JantarResumo } from "@/components/jantar-resumo";
 import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { prisma } from "@/lib/prisma";
 import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
+import { deriveSeMovEventKind, seMovEventKindLabel } from "@/lib/se-mov-event-kind";
 
 type Props = { params: Promise<{ eventId: string }> };
 
@@ -33,5 +34,5 @@ export default async function JantarResumoPage({ params }: Props) {
     redirect("/app/agenda");
   }
 
-  return <JantarResumo eventId={event.id} />;
+  return <JantarResumo eventId={event.id} headerTitle={seMovEventKindLabel(deriveSeMovEventKind(event))} />;
 }

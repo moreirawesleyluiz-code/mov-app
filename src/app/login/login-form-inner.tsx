@@ -95,7 +95,6 @@ export function LoginFormInner() {
 
   return (
     <AuthScreen
-      showWordmark={false}
       footer={
         <div className="mt-8 rounded-2xl border border-movApp-border bg-movApp-subtle/90 px-5 py-5 text-center sm:mt-9">
           <p className="text-[13px] text-movApp-muted">Novo por aqui?</p>

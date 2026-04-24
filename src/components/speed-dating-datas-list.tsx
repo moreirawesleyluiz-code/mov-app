@@ -13,7 +13,7 @@ function SpeedDatingGlyph() {
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-movApp-accent"
+        className="text-rose-600"
       />
     </svg>
   );
@@ -54,7 +54,7 @@ export function SpeedDatingDatasList({
                   href={`/app/ex/datas/${ev.id}/regiao`}
                   className="group flex items-center gap-3 rounded-2xl border border-movApp-border bg-movApp-paper p-4 shadow-sm transition hover:border-movApp-border/90 hover:shadow-md"
                 >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-movApp-accentSoft ring-1 ring-movApp-accent/25">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-50 ring-1 ring-rose-200/90">
                     <SpeedDatingGlyph />
                   </span>
                   <div className="min-w-0 flex-1">

@@ -77,6 +77,7 @@ export function RegisterFormInner() {
 
   return (
     <AuthScreen
+      showWordmark={false}
       footer={
         <div className="mt-9 rounded-2xl border border-movApp-border bg-movApp-subtle/90 px-5 py-5 text-center sm:mt-10">
           <p className="text-[13px] text-movApp-muted">Já tem conta?</p>
@@ -90,15 +91,10 @@ export function RegisterFormInner() {
       }
     >
       <AuthCard>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-movApp-accent">Conta</p>
-        <h1 className="mt-2 font-display text-[1.85rem] font-normal leading-tight tracking-[-0.03em] text-movApp-ink sm:text-[2rem]">
+        <h1 className="font-display text-[1.85rem] font-normal leading-tight tracking-[-0.03em] text-movApp-ink sm:text-[2rem]">
           Criar conta
         </h1>
-        <p className="mt-3 text-pretty text-[14px] leading-relaxed text-movApp-muted sm:text-[15px]">
-          Crie sua conta e entre na MOV; você completa seu perfil na entrada do produto no ritmo que
-          preferir.
-        </p>
-        <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
+        <form onSubmit={onSubmit} className="mt-7 flex flex-col gap-5">
           <div>
             <label htmlFor="name" className={authLabelClass}>
               Nome

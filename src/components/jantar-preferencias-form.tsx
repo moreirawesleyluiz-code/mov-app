@@ -42,9 +42,11 @@ const initialDietaryMap = (): Record<string, boolean> =>
 export function JantarPreferenciasForm({
   eventId,
   regionKey,
+  headerTitle = "Jantar",
 }: {
   eventId: string;
   regionKey: string;
+  headerTitle?: string;
 }) {
   const router = useRouter();
   const [lang, setLang] = useState<Record<string, boolean>>({
@@ -141,7 +143,7 @@ export function JantarPreferenciasForm({
             ←
           </span>
         </Link>
-        <h1 className="text-base font-semibold text-movApp-ink">Jantar</h1>
+        <h1 className="text-base font-semibold text-movApp-ink">{headerTitle}</h1>
       </div>
 
       <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-movApp-border">
@@ -155,10 +157,7 @@ export function JantarPreferenciasForm({
       </div>
 
       <section className="mt-2">
-        <h2 className="text-sm font-medium leading-snug text-movApp-ink">
-          Que idioma(s) você está disposto a falar no jantar?{" "}
-          <span className="text-movApp-muted">( Obrigatório )</span>
-        </h2>
+        <h2 className="text-sm font-medium leading-snug text-movApp-ink">Que idioma(s) você está disposto a falar no jantar?</h2>
         <div className="mt-4 flex flex-col gap-3">
           {LANGUAGE_OPTIONS.map((o) => {
             const checked = !!lang[o.id];
@@ -183,10 +182,7 @@ export function JantarPreferenciasForm({
       </section>
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium leading-snug text-movApp-ink">
-          Quanto você está disposto a gastar no jantar?{" "}
-          <span className="text-movApp-muted">( Obrigatório )</span>
-        </h2>
+        <h2 className="text-sm font-medium leading-snug text-movApp-ink">Quanto você está disposto a gastar no jantar?</h2>
         <div className="mt-4 flex flex-col gap-3">
           {BUDGET_OPTIONS.map((o) => {
             const checked = !!budget[o.id];
@@ -212,10 +208,7 @@ export function JantarPreferenciasForm({
 
       <section className="mt-8">
         <div className="flex min-h-[3.25rem] items-center justify-between gap-4 rounded-2xl border border-movApp-border bg-movApp-subtle/80 px-4 py-4">
-          <h2 className="text-sm font-semibold leading-snug text-movApp-ink">
-            Tenho restrições alimentares{" "}
-            <span className="font-normal text-movApp-muted">( Opcional )</span>
-          </h2>
+          <h2 className="text-sm font-semibold leading-snug text-movApp-ink">Tenho restrições alimentares</h2>
           <button
             type="button"
             role="switch"

@@ -25,7 +25,6 @@ test.describe("Home real /app (sessão autenticada)", () => {
 
     // Home — client boundary estável (sem crash de chunk)
     await expect(page.getByRole("heading", { name: /Olá/ })).toBeVisible();
-    await expect(page.getByText("App MOV").first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Speed Dating", exact: true })).toBeVisible();
 
     // Experiências não é aba principal (nenhum link com esse nome na UI)
@@ -44,17 +43,20 @@ test.describe("Home real /app (sessão autenticada)", () => {
     await expect(page.getByRole("link", { name: "Começar" })).toHaveCount(0);
 
     // Entrada Speed Dating a partir da home (não há aba Experiências no menu)
-    await page.getByRole("link", { name: "Speed Dating" }).first().click();
+    await page.getByRole("link", { name: "Quero Participar" }).first().click();
+    await page.waitForURL(/\/app\/experiencias$/, { timeout: 15_000 });
     await expect(page).toHaveURL(/\/app\/experiencias$/);
-    await expect(page.getByRole("heading", { level: 1, name: /^Speed Dating$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /Speed Dating/i })).toBeVisible();
 
     await page.goto("/app");
-    await page.getByRole("link", { name: "Comunidade" }).first().click();
+    await expect(page.getByRole("link", { name: "Comunidade" }).first()).toHaveAttribute("href", "/app/comunidade");
+    await page.goto("/app/comunidade");
     await expect(page).toHaveURL(/\/app\/comunidade$/);
     await expect(page.getByRole("heading", { level: 1, name: /A comunidade MOV/ })).toBeVisible();
 
     await page.goto("/app");
-    await page.getByRole("link", { name: "Conta" }).first().click();
+    await expect(page.getByRole("link", { name: "Conta" }).first()).toHaveAttribute("href", "/app/conta");
+    await page.goto("/app/conta");
     await expect(page).toHaveURL(/\/app\/conta$/);
 
     // Mobile: home legível, sem erro

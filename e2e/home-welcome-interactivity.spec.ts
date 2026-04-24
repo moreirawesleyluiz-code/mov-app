@@ -8,7 +8,7 @@ test.describe("Home — botão Começar e link para login", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     await page.getByRole("button", { name: "Começar" }).click();
-    await expect(page.getByRole("heading", { name: "Localização" })).toBeVisible({
+    await expect(page.getByRole("button", { name: "Mudar minha cidade" })).toBeVisible({
       timeout: 15_000,
     });
 
