@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -133,6 +138,7 @@ model AsaasPayment {
   asaasPaymentId     String   @unique
   /** Status devolvido pelo Asaas (PENDING, RECEIVED, etc.) */
   asaasStatus        String
+  paymentMethod      PaymentMethod @default(PIX)
   valueCents         Int
   /** Rastreio e conciliação: enviado como `externalReference` no Asaas */
   externalReference  String   @unique
