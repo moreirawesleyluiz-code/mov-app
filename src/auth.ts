@@ -2,10 +2,21 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
 const googleConfigured =
   Boolean(process.env.AUTH_GOOGLE_ID?.trim()) && Boolean(process.env.AUTH_GOOGLE_SECRET?.trim());
 
+function normalizeAuthRedirectPath(pathnameWithQuery: string): string {
+  if (pathnameWithQuery === "/app" || pathnameWithQuery.startsWith("/app/")) return pathnameWithQuery;
+  if (pathnameWithQuery === "/admin" || pathnameWithQuery.startsWith("/admin/")) return pathnameWithQuery;
+  if (pathnameWithQuery === "/aplicativo" || pathnameWithQuery.startsWith("/aplicativo/")) {
+    return pathnameWithQuery.replace(/^\/aplicativo/, "/app");
+  }
+  return "/app";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: authSecret,
   trustHost: true,
   providers: [
     Credentials({
@@ -36,6 +47,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/login" },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      try {
+        const target = new URL(url, baseUrl);
+        const base = new URL(baseUrl);
+        if (target.origin !== base.origin) {
+          return `${base.origin}/app`;
+        }
+        const path = `${target.pathname}${target.search}${target.hash}`;
+        return `${base.origin}${normalizeAuthRedirectPath(path)}`;
+      } catch {
+        return `${baseUrl}/app`;
+      }
+    },
     async signIn({ account, profile }) {
       if (account?.provider !== "google") return true;
       const emailRaw = profile && typeof profile === "object" && "email" in profile ? profile.email : undefined;

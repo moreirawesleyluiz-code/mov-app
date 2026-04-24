@@ -11,12 +11,26 @@ const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
  * - `/app/*`: sessão obrigatória; admins podem navegar no app (validação de eventos e UX).
  */
 export async function middleware(req: NextRequest) {
+  if (!secret && process.env.NODE_ENV === "production") {
+    console.error("[MOV auth] AUTH_SECRET/NEXTAUTH_SECRET ausente no middleware; sessão pode falhar.");
+  }
   const path = req.nextUrl.pathname;
+  const isLegacyAplicativo = path === "/aplicativo" || path.startsWith("/aplicativo/");
+
+  if (isLegacyAplicativo) {
+    const to = new URL(path.replace(/^\/aplicativo/, "/app"), req.nextUrl.origin);
+    to.search = req.nextUrl.search;
+    return NextResponse.redirect(to);
+  }
+
   const isApp = path === "/app" || path.startsWith("/app/");
   const isAdminRoute = path === "/admin" || path.startsWith("/admin/");
   const isAdminLogin = path === "/admin/login";
 
-  const token = secret ? await getToken({ req, secret }).catch(() => null) : null;
+  const token = await getToken({
+    req,
+    ...(secret ? { secret } : {}),
+  }).catch(() => null);
   const role = typeof token?.role === "string" ? token.role : undefined;
 
   if (isAdminRoute) {
@@ -57,5 +71,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app", "/app/:path*", "/admin", "/admin/:path*"],
+  matcher: ["/app", "/app/:path*", "/aplicativo", "/aplicativo/:path*", "/admin", "/admin/:path*"],
 };
