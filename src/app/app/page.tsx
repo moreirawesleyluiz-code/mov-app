@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { loadUserOnboardingProfile } from "@/lib/load-user-onboarding-profile";
 import { prisma } from "@/lib/prisma";
 import { isSeMovDemoActive } from "@/lib/se-mov-demo";
-import { activateSeMov } from "./actions";
 
 /** Sessão + Prisma: sempre dinâmico; evita cache RSC inconsistente com JWT. */
 export const dynamic = "force-dynamic";
@@ -80,11 +79,14 @@ export default async function AppHomePage() {
               </div>
             </div>
           ) : (
-            <form action={activateSeMov} className="mt-8 flex w-full flex-col sm:block">
-              <Button type="submit" className="h-12 min-h-[48px] w-full px-6 sm:w-auto sm:min-w-[15rem]">
-                Ativar Se Mov — modo demonstração
-              </Button>
-            </form>
+            <div className="mt-8 flex w-full flex-col sm:block">
+              <a
+                href="/app/planos"
+                className="inline-flex h-12 min-h-[48px] w-full items-center justify-center rounded-xl bg-movApp-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-movApp-accentHover sm:w-auto sm:min-w-[15rem]"
+              >
+                Ver planos do Se Mov
+              </a>
+            </div>
           )}
         </div>
       </section>
