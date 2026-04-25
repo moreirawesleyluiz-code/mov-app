@@ -39,7 +39,13 @@ const TYPE_LABEL: Record<string, string> = {
   EXCLUSIVO: "Speed Dating — Exclusivo",
 };
 
-export default async function AdminEventosPage() {
+export default async function AdminEventosPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ error?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const error = resolvedSearchParams?.error;
   const events = await prisma.event.findMany({
     orderBy: [{ startsAt: "asc" }, { createdAt: "desc" }],
   });
@@ -63,6 +69,11 @@ export default async function AdminEventosPage() {
 
       <section className="rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-movApp-muted">Novo evento</h2>
+        {error === "slug-duplicado" ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50/80 p-3 text-sm text-red-800">
+            Já existe um evento com este slug. Use outro slug.
+          </p>
+        ) : null}
         <form action={upsertAdminEvent} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <label className="text-xs font-medium text-movApp-muted">
             Nome

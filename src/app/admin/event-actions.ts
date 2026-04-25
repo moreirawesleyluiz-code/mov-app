@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { assertAdminRole } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -125,7 +126,7 @@ export async function upsertAdminEvent(formData: FormData) {
   });
 
   if (existingWithSlug) {
-    throw new Error("Já existe um evento com este slug. Use outro slug.");
+    redirect("/admin/eventos?error=slug-duplicado");
   }
 
   if (id) {
