@@ -51,47 +51,8 @@ export function JantarResumo({ eventId, headerTitle = "Jantar" }: { eventId: str
     }
     setLoading(true);
     setError(null);
-    try {
-      const res = await fetch(`/api/events/${eventId}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          regionKey: d.regionKey,
-          languages: d.languages,
-          budgetTiers: d.budgetTiers,
-          dietaryRestrictions: d.dietaryRestrictions,
-          dietaryTypes: d.dietaryRestrictions ? d.dietaryTypes : [],
-        }),
-      });
-      const text = await res.text();
-      let data: { error?: unknown } = {};
-      try {
-        data = text ? (JSON.parse(text) as { error?: unknown }) : {};
-      } catch {
-        data = {};
-      }
-      if (!res.ok) {
-        const msg =
-          typeof data.error === "string"
-            ? data.error
-            : text.trim() || `Erro ${res.status} (${res.statusText || "servidor"})`;
-        setError(msg);
-        setLoading(false);
-        return;
-      }
-      clearJantarDraft(eventId);
-      const demo =
-        data &&
-        typeof data === "object" &&
-        "demo" in data &&
-        (data as { demo?: boolean }).demo === true;
-      router.push(demo ? "/app" : "/app/planos");
-      router.refresh();
-    } catch {
-      setError("Erro de rede.");
-      setLoading(false);
-    }
+    router.push("/app/planos");
+    router.refresh();
   }
 
   if (!draft) {
