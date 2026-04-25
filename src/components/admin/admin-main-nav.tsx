@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/admin", label: "Utilizadores" },
   { href: "/admin/mesas", label: "Mesas" },
+  { href: "/admin/eventos", label: "Eventos" },
+  { href: "/admin/denuncias", label: "Denúncias" },
   { href: "/admin/restaurantes", label: "Restaurantes" },
   { href: "/admin/montagem", label: "Montagem" },
 ] as const;
@@ -72,9 +74,39 @@ function IconCuration({ className }: { className?: string }) {
   );
 }
 
+function IconEvents({ className }: { className?: string }) {
+  return (
+    <svg className={className} width={24} height={24} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M7 3v3m10-3v3M4 9h16M6.5 5h11A1.5 1.5 0 0119 6.5v12a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 015 18.5v-12A1.5 1.5 0 016.5 5zm2.5 7h2v2H9v-2zm4 0h2v2h-2v-2z"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconReports({ className }: { className?: string }) {
+  return (
+    <svg className={className} width={24} height={24} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M12 8v5m0 3h.01M10.3 4.7l-7 12.1A1 1 0 004.2 18h15.6a1 1 0 00.87-1.52l-7-12.1a1 1 0 00-1.74 0z"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const NAV_ICONS = {
   "/admin": IconUsers,
   "/admin/mesas": IconTables,
+  "/admin/eventos": IconEvents,
+  "/admin/denuncias": IconReports,
   "/admin/restaurantes": IconRestaurant,
   "/admin/montagem": IconCuration,
 } as const;
@@ -88,7 +120,7 @@ export function AdminMainNav() {
       aria-label="Áreas administrativas"
       style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom, 0px))" }}
     >
-      <ul className="mx-auto grid w-full max-w-6xl list-none grid-cols-4 p-0">
+      <ul className="mx-auto grid w-full max-w-6xl list-none grid-cols-6 p-0">
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = NAV_ICONS[item.href];

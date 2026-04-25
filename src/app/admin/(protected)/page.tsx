@@ -165,14 +165,6 @@ export default async function AdminDashboardPage({ searchParams }: Props) {
         >
           Utilizadores
         </h1>
-        <div className="flex items-center gap-2">
-          <Link href="/admin/eventos" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
-            Gerir eventos
-          </Link>
-          <Link href="/admin/denuncias" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
-            Ver denúncias
-          </Link>
-        </div>
       </div>
 
       <form method="get" action="/admin" className="mt-5 space-y-4 rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm">

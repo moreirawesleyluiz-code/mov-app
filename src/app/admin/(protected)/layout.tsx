@@ -15,12 +15,6 @@ export default async function AdminProtectedLayout({ children }: { children: Rea
             <p className="text-xs font-semibold uppercase tracking-wide text-movApp-muted">Painel MOV</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/admin/eventos" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
-              Eventos
-            </Link>
-            <Link href="/admin/denuncias" className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink">
-              Denúncias
-            </Link>
             <AdminSignOutButton />
           </div>
         </header>
