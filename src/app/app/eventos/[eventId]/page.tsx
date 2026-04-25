@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ eventId: string }> };
 
-function eventNextStep(event: { memberOnly: boolean; type: string }) {
+function eventNextStep(event: { id: string; memberOnly: boolean; type: string }) {
   if (event.memberOnly) {
-    return { href: "/app/agenda", label: "Ir para agenda Se Mov" };
+    return { href: `/app/agenda/${event.id}/regiao`, label: "Inscrever-me" };
   }
   if (event.type === "CLASSICO" || event.type === "SENSORIAL" || event.type === "EXCLUSIVO") {
     return { href: "/app/experiencias", label: "Ir para Speed Dating" };

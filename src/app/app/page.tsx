@@ -1,4 +1,5 @@
 import type { Session } from "next-auth";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -80,12 +81,12 @@ export default async function AppHomePage() {
             </div>
           ) : (
             <div className="mt-8 flex w-full flex-col sm:block">
-              <a
-                href="/app/planos"
+              <Link
+                href="/app/eventos"
                 className="inline-flex h-12 min-h-[48px] w-full items-center justify-center rounded-xl bg-movApp-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-movApp-accentHover sm:w-auto sm:min-w-[15rem]"
               >
                 Ver planos do Se Mov
-              </a>
+              </Link>
             </div>
           )}
         </div>

@@ -1,15 +1,17 @@
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { JantarResumo } from "@/components/jantar-resumo";
 import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { prisma } from "@/lib/prisma";
-import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
 import { deriveSeMovEventKind, seMovEventKindLabel } from "@/lib/se-mov-event-kind";
 
 type Props = { params: Promise<{ eventId: string }> };
 
 export default async function JantarResumoPage({ params }: Props) {
   const { eventId } = await params;
-  const { userId } = await requireAgendaSeMovAccess();
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/");
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (

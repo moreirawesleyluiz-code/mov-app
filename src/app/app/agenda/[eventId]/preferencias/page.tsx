@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { JantarPreferenciasForm } from "@/components/jantar-preferencias-form";
 import { isDemoJantarFlowEnabled } from "@/lib/demo-jantar";
 import { isValidRegionKey } from "@/lib/sp-regions";
 import { prisma } from "@/lib/prisma";
-import { requireAgendaSeMovAccess } from "@/lib/se-mov-agenda-access";
 import { deriveSeMovEventKind, seMovEventKindLabel } from "@/lib/se-mov-event-kind";
 
 type Props = {
@@ -16,7 +16,9 @@ export default async function JantarPreferenciasPage({ params, searchParams }: P
   const sp = await searchParams;
   const regionKey = sp.regionKey;
 
-  const { userId } = await requireAgendaSeMovAccess();
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) redirect("/");
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (

@@ -51,7 +51,7 @@ export function JantarResumo({ eventId, headerTitle = "Jantar" }: { eventId: str
     }
     setLoading(true);
     setError(null);
-    router.push(`/app/ex/datas/${eventId}/regiao`);
+    router.push("/app/planos");
     router.refresh();
   }
 
