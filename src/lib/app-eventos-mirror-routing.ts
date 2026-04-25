@@ -21,6 +21,6 @@ export function appEventosCardDisplayName(
  */
 export function appEventosCardDestination(origin: AppEventosOrigin, eventId: string): string {
   if (origin === "SPEED_DATING") return `/app/ex/datas/${eventId}/regiao`;
-  if (origin === "SE_MOV") return `/app/agenda/${eventId}/regiao`;
+  if (origin === "SE_MOV") return `/app/eventos/${eventId}`;
   return `/app/eventos/${eventId}`;
 }
