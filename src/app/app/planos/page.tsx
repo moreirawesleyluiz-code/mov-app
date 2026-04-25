@@ -10,8 +10,8 @@ export default async function PlanosPage() {
   const sub = await prisma.subscription.findUnique({
     where: { userId: session.user.id },
   });
-  if (sub?.status !== "active") {
-    redirect("/app");
+  if (sub?.status === "active") {
+    redirect("/app/agenda");
   }
 
   return <PlanosMovScreen />;
