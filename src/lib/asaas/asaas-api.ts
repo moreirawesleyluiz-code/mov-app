@@ -99,6 +99,17 @@ type PaymentResponse = {
   billingType?: string;
 };
 
+type CreditCardRedirectPaymentResponse = {
+  id: string;
+  status: string;
+  value: number;
+  customer: string;
+  description?: string;
+  externalReference?: string;
+  billingType?: string;
+  invoiceUrl?: string;
+};
+
 type PixQrCodeResponse = {
   encodedImage: string;
   payload: string;
@@ -117,6 +128,26 @@ export async function createAsaasPaymentPix(input: {
     body: JSON.stringify({
       customer: input.customerId,
       billingType: "PIX",
+      value: input.valueReais,
+      dueDate: input.dueDate,
+      description: input.description,
+      externalReference: input.externalReference,
+    }),
+  });
+}
+
+export async function createAsaasPaymentCreditCardRedirect(input: {
+  customerId: string;
+  valueReais: number;
+  dueDate: string; // YYYY-MM-DD
+  description: string;
+  externalReference: string;
+}): Promise<CreditCardRedirectPaymentResponse> {
+  return asaasRequest<CreditCardRedirectPaymentResponse>("/payments", {
+    method: "POST",
+    body: JSON.stringify({
+      customer: input.customerId,
+      billingType: "CREDIT_CARD",
       value: input.valueReais,
       dueDate: input.dueDate,
       description: input.description,
