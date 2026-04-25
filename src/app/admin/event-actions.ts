@@ -100,7 +100,6 @@ export async function upsertAdminEvent(formData: FormData) {
   const venueAddress = parseOptionalText(formData.get("venueAddress"));
   const priceCents = parseOptionalInt(formData.get("priceCents")) ?? 0;
   const capacity = parseOptionalInt(formData.get("capacity"));
-  /** Checkbox: ausente = false; vários campos com o mesmo nome podem existir (hidden+checkbox). */
   const published = formData.getAll("published").includes("on");
 
   const payload = {
@@ -116,6 +115,18 @@ export async function upsertAdminEvent(formData: FormData) {
     memberOnly: productLine === "SE_MOV",
     published,
   };
+
+  const existingWithSlug = await prisma.event.findFirst({
+    where: {
+      slug,
+      ...(id ? { NOT: { id } } : {}),
+    },
+    select: { id: true },
+  });
+
+  if (existingWithSlug) {
+    throw new Error("Já existe um evento com este slug. Use outro slug.");
+  }
 
   if (id) {
     await prisma.event.update({ where: { id }, data: payload });
