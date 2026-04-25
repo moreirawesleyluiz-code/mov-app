@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { CancelarAssinaturaButton } from "@/components/conta/cancelar-assinatura-button";
 import { ContaSubpageHeader } from "@/components/conta/conta-subpage-header";
 import { prisma } from "@/lib/prisma";
 
@@ -24,12 +25,15 @@ export default async function ContaAssinaturaPage() {
           .
         </p>
         {active ? (
-          <Link
-            href="/app/planos"
-            className="mt-6 inline-flex h-11 min-h-[44px] items-center justify-center rounded-xl border border-movApp-border bg-movApp-subtle px-4 text-sm font-semibold text-movApp-ink hover:bg-movApp-border/20"
-          >
-            Ver planos
-          </Link>
+          <>
+            <Link
+              href="/app/planos"
+              className="mt-6 inline-flex h-11 min-h-[44px] items-center justify-center rounded-xl border border-movApp-border bg-movApp-subtle px-4 text-sm font-semibold text-movApp-ink hover:bg-movApp-border/20"
+            >
+              Ver planos
+            </Link>
+            <CancelarAssinaturaButton />
+          </>
         ) : null}
       </div>
       <p className="mt-8 text-center text-xs text-movApp-muted">

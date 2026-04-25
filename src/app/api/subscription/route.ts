@@ -39,3 +39,20 @@ export async function GET() {
   });
   return NextResponse.json(sub);
 }
+
+export async function DELETE() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  await prisma.subscription.updateMany({
+    where: { userId: session.user.id, status: "active" },
+    data: {
+      status: "canceled",
+      canceledAt: new Date(),
+    },
+  });
+
+  return NextResponse.json({ ok: true });
+}
