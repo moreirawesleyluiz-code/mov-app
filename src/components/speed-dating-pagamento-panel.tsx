@@ -24,6 +24,14 @@ type ChargeOk = {
   expirationDate: string;
 };
 
+type CreditCardChargeOk = {
+  movPaymentId: string;
+  asaasPaymentId: string;
+  status: string;
+  valueReais: number;
+  invoiceUrl: string;
+};
+
 export function SpeedDatingPagamentoPanel({
   eventId,
   regionKey,
@@ -32,17 +40,13 @@ export function SpeedDatingPagamentoPanel({
   alreadyRegistered,
   listHref,
 }: PanelProps) {
-  const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [charge, setCharge] = useState<ChargeOk | null>(null);
-  const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [paymentSettled, setPaymentSettled] = useState(false);
   const [freeDone, setFreeDone] = useState(false);
   const [freeErr, setFreeErr] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const onlyDigits = (s: string) => s.replace(/\D/g, "");
 
   const clearPoll = useCallback(() => {
     if (tickRef.current) {
@@ -72,7 +76,6 @@ export function SpeedDatingPagamentoPanel({
           }
           return;
         }
-        if (d.asaasStatus) setStatusLabel(d.asaasStatus);
         if (d.done) {
           setPaymentSettled(true);
           clearPoll();
@@ -102,18 +105,13 @@ export function SpeedDatingPagamentoPanel({
       setErr("Pagamento ainda não está ativo. Volta em breve ou fala com o apoio.");
       return;
     }
-    const c = onlyDigits(cpf);
-    if (c.length !== 11 && c.length !== 14) {
-      setErr("Indica o CPF ou o CNPJ (só com números) para o Asaas gerar o Pix.");
-      return;
-    }
     setErr(null);
     setLoading(true);
     try {
       const r = await fetch("/api/asaas/pix/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, regionKey, cpfCnpj: c }),
+        body: JSON.stringify({ eventId, regionKey }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -121,6 +119,36 @@ export function SpeedDatingPagamentoPanel({
         return;
       }
       setCharge(d as ChargeOk);
+    } catch {
+      setErr("Falha de rede. Tenta de novo em instantes.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onCreateCreditCard() {
+    if (!asaasEnabled) {
+      setErr("Pagamento ainda não está ativo. Volta em breve ou fala com o apoio.");
+      return;
+    }
+    setErr(null);
+    setLoading(true);
+    try {
+      const r = await fetch("/api/asaas/credit-card/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, regionKey }),
+      });
+      const d = (await r.json().catch(() => ({}))) as Partial<CreditCardChargeOk> & { error?: string };
+      if (!r.ok) {
+        setErr(typeof d.error === "string" ? d.error : "Não foi possível gerar a cobrança.");
+        return;
+      }
+      if (!d.invoiceUrl) {
+        setErr("Não foi possível abrir o pagamento por cartão. Tenta de novo em instantes.");
+        return;
+      }
+      window.location.href = d.invoiceUrl;
     } catch {
       setErr("Falha de rede. Tenta de novo em instantes.");
     } finally {
@@ -227,25 +255,6 @@ export function SpeedDatingPagamentoPanel({
 
       {!charge ? (
         <>
-          <p className="text-sm text-movApp-muted">
-            Para gerar o Pix, o Asaas exige o documento (CPF ou CNPJ) do pagador. Não o guardámos: só o enviado neste passo
-            chega à API de pagamento.
-          </p>
-          <div>
-            <label htmlFor="cpf-asaas" className="text-xs font-semibold uppercase tracking-wider text-movApp-muted">
-              CPF ou CNPJ (só números)
-            </label>
-            <input
-              id="cpf-asaas"
-              className="mt-1.5 w-full min-h-[48px] rounded-xl border border-movApp-border bg-white px-3 text-base text-movApp-ink"
-              inputMode="numeric"
-              autoComplete="off"
-              name="cpf-asaas"
-              placeholder="Ex.: 00000000000"
-              value={cpf}
-              onChange={(e) => setCpf(onlyDigits(e.target.value))}
-            />
-          </div>
           <div className="flex flex-col gap-3 sm:flex-col">
             <Button
               type="button"
@@ -254,6 +263,15 @@ export function SpeedDatingPagamentoPanel({
               className="h-12 w-full min-h-[48px] text-base font-semibold"
             >
               {loading ? "A preparar o Pix…" : `Gerar Pix de ${formatBRL(priceCents)}`}
+            </Button>
+            <Button
+              type="button"
+              onClick={onCreateCreditCard}
+              disabled={loading}
+              className="h-12 w-full min-h-[48px] text-base font-semibold"
+              variant="secondary"
+            >
+              {loading ? "A preparar o pagamento…" : "Pagar com cartão"}
             </Button>
             <Link
               href={listHref}
@@ -279,15 +297,6 @@ export function SpeedDatingPagamentoPanel({
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-movApp-ink">
-            Escaneia o QR ou copia o código abaixo com o banco. O app verifica o pagamento automaticamente.
-            {statusLabel && (
-              <span
-                className="mt-1 block text-xs text-movApp-muted"
-                aria-live="polite"
-              >{`Estado no Asaas: ${statusLabel}`}</span>
-            )}
-          </p>
           {charge.encodedImage ? (
             <div className="flex justify-center">
               <img

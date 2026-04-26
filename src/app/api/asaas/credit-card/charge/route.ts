@@ -3,17 +3,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
   AsaasApiError,
-  createAsaasCustomer,
   createAsaasPaymentCreditCardRedirect,
-  findFirstCustomerIdByEmail,
 } from "@/lib/asaas/asaas-api";
+import { ensureAsaasCustomerId } from "@/lib/asaas/ensure-asaas-customer";
 import { prisma } from "@/lib/prisma";
 import { isValidRegionKey } from "@/lib/sp-regions";
 import { getSpeedDatingEventById } from "@/lib/speed-dating-public-events";
-
-function onlyDigits(s: string): string {
-  return s.replace(/\D/g, "");
-}
 
 function dueDateTodaySaoPaulo(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -41,22 +36,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = (await req.json().catch(() => ({}))) as { eventId?: string; regionKey?: string; cpfCnpj?: string };
-  const { eventId, regionKey, cpfCnpj: cpfIn } = body;
+  const body = (await req.json().catch(() => ({}))) as { eventId?: string; regionKey?: string };
+  const { eventId, regionKey } = body;
   if (!eventId || typeof eventId !== "string") {
     return NextResponse.json({ error: "Falta o evento." }, { status: 400 });
   }
   if (!regionKey || !isValidRegionKey(regionKey)) {
     return NextResponse.json({ error: "Região inválida. Volte e selecione a região." }, { status: 400 });
   }
-  const cpf = onlyDigits(typeof cpfIn === "string" ? cpfIn : "");
-  if (cpf.length !== 11 && cpf.length !== 14) {
-    return NextResponse.json(
-      { error: "Indique um CPF (11 dígitos) ou CNPJ (14 dígitos) só com números, conforme o Asaas." },
-      { status: 400 },
-    );
-  }
-
   const event = await getSpeedDatingEventById(eventId);
   if (!event || event.priceCents <= 0) {
     return NextResponse.json(
@@ -75,20 +62,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const name = (user.name || user.email.split("@")[0] || "Participante").slice(0, 120);
   const extRef = `mov_${user.id.slice(0, 8)}_${eventId.slice(0, 6)}_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
 
   try {
-    let customerId = await findFirstCustomerIdByEmail(user.email);
-    if (!customerId) {
-      const created = await createAsaasCustomer({
-        name,
-        email: user.email,
-        cpfCnpj: cpf,
-        externalReference: `mov_user_${user.id}`,
-      });
-      customerId = created.id;
-    }
+    const customerId = await ensureAsaasCustomerId({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    });
 
     const valueReais = event.priceCents / 100;
     const pay = await createAsaasPaymentCreditCardRedirect({
@@ -128,6 +109,12 @@ export async function POST(req: Request) {
       invoiceUrl: pay.invoiceUrl,
     });
   } catch (e) {
+    if (e instanceof Error && e.message.includes("ASAAS_DEFAULT_CUSTOMER_CPF_CNPJ")) {
+      return NextResponse.json(
+        { error: "Pagamento indisponível temporariamente. Contacte o apoio da MOV." },
+        { status: 503 },
+      );
+    }
     if (e instanceof AsaasApiError) {
       return NextResponse.json(
         { error: e.message || "Erro ao falar com o fornecedor de pagamento." },
