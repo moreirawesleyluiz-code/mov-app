@@ -85,7 +85,7 @@ export default async function AppHomePage() {
                 href="/app/eventos"
                 className="inline-flex h-12 min-h-[48px] w-full items-center justify-center rounded-xl bg-movApp-accent px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-movApp-accentHover sm:w-auto sm:min-w-[15rem]"
               >
-                Ver planos do Se Mov
+                Escolha sua experiência
               </Link>
             </div>
           )}
