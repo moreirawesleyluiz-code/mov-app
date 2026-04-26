@@ -61,10 +61,6 @@ export default async function SpeedDatingPlanosPage({ params, searchParams }: Pr
       <h1 className="font-display text-2xl font-semibold leading-tight tracking-[-0.02em] text-movApp-ink md:text-3xl">
         Pagamento
       </h1>
-      <p className="mt-2 text-sm text-movApp-muted">
-        Reveja o valor, preencha o CPF/CNPJ do pagador (exigido pelo Asaas) e gere o Pix. O ambiente (sandbox vs
-        produção) depende da chave definida em <code className="text-xs">ASAAS_API_KEY</code>.
-      </p>
 
       <div className="mt-5 space-y-4 rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm sm:mt-6">
         <div className="flex flex-col gap-1 border-b border-movApp-border/80 pb-4">

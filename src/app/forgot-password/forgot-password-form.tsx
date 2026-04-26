@@ -44,13 +44,9 @@ export function ForgotPasswordForm() {
       }
     >
       <AuthCard>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-movApp-accent">Recuperação</p>
         <h1 className="mt-2 font-display text-[1.85rem] font-normal leading-tight tracking-[-0.03em] text-movApp-ink sm:text-[2rem]">
           {authForgotPasswordLabel}
         </h1>
-        <p className="mt-3 text-pretty text-[14px] leading-relaxed text-movApp-muted sm:text-[15px]">
-          Indique o e-mail da sua conta. Se existir, enviaremos um link para definir uma nova senha.
-        </p>
         <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
           <div>
             <label htmlFor="forgot-email" className={authLabelClass}>

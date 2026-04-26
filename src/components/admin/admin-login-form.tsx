@@ -68,13 +68,9 @@ export function AdminLoginForm() {
   return (
     <AuthScreen footer={<p className="mt-8 text-center text-xs text-movApp-muted">Área restrita à equipa MOV.</p>}>
       <AuthCard>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-movApp-accent">Admin</p>
         <h1 className="mt-2 font-display text-[1.85rem] font-normal leading-tight tracking-[-0.03em] text-movApp-ink sm:text-[2rem]">
           Entrar — admin
         </h1>
-        <p className="mt-3 text-pretty text-[14px] leading-relaxed text-movApp-muted sm:text-[15px]">
-          Acesso separado da área do cliente. Utilizadores normais não entram aqui.
-        </p>
         <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
           <div>
             <label htmlFor="admin-email" className={authLabelClass}>
