@@ -10,6 +10,7 @@ import { ensureAsaasCustomerId } from "@/lib/asaas/ensure-asaas-customer";
 import { isValidRegionKey } from "@/lib/sp-regions";
 import { getSpeedDatingEventById } from "@/lib/speed-dating-public-events";
 import { prisma } from "@/lib/prisma";
+import { validateVoucherForAmount } from "@/lib/vouchers";
 
 function dueDateTodaySaoPaulo(): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -37,8 +38,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = (await req.json().catch(() => ({}))) as { eventId?: string; regionKey?: string };
-  const { eventId, regionKey } = body;
+  const body = (await req.json().catch(() => ({}))) as { eventId?: string; regionKey?: string; voucherCode?: string | null };
+  const { eventId, regionKey, voucherCode } = body;
   if (!eventId || typeof eventId !== "string") {
     return NextResponse.json({ error: "Falta o evento." }, { status: 400 });
   }
@@ -64,6 +65,14 @@ export async function POST(req: Request) {
   }
 
   const extRef = `mov_${user.id.slice(0, 8)}_${eventId.slice(0, 6)}_${randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  const normalizedVoucherCode = typeof voucherCode === "string" ? voucherCode.trim() : "";
+  const voucherResult = normalizedVoucherCode
+    ? await validateVoucherForAmount({ code: normalizedVoucherCode, baseValueCents: event.priceCents })
+    : null;
+  if (voucherResult && !voucherResult.ok) {
+    return NextResponse.json({ error: voucherResult.error }, { status: 400 });
+  }
+  const finalValueCents = voucherResult?.ok ? voucherResult.finalValueCents : event.priceCents;
 
   try {
     const customerId = await ensureAsaasCustomerId({
@@ -72,7 +81,7 @@ export async function POST(req: Request) {
       name: user.name,
     });
 
-    const valueReais = event.priceCents / 100;
+    const valueReais = finalValueCents / 100;
     const pay = await createAsaasPaymentPix({
       customerId,
       valueReais,
@@ -89,7 +98,12 @@ export async function POST(req: Request) {
         asaasCustomerId: customerId,
         asaasPaymentId: pay.id,
         asaasStatus: pay.status || "PENDING",
-        valueCents: event.priceCents,
+        valueCents: finalValueCents,
+        originalValueCents: event.priceCents,
+        discountedValueCents: finalValueCents,
+        discountPercent: voucherResult?.ok ? voucherResult.discountPercent : null,
+        voucherCode: voucherResult?.ok ? voucherResult.code : null,
+        voucherId: voucherResult?.ok ? voucherResult.voucherId : null,
         externalReference: extRef,
       },
     });

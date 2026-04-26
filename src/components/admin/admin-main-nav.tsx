@@ -8,6 +8,7 @@ const NAV = [
   { href: "/admin", label: "Utilizadores" },
   { href: "/admin/mesas", label: "Mesas" },
   { href: "/admin/eventos", label: "Eventos" },
+  { href: "/admin/vouchers", label: "Vouchers" },
   { href: "/admin/denuncias", label: "Denúncias" },
   { href: "/admin/operacao", label: "Operação" },
   { href: "/admin/restaurantes", label: "Restaurantes" },
@@ -117,10 +118,25 @@ function IconOperation({ className }: { className?: string }) {
   );
 }
 
+function IconVoucher({ className }: { className?: string }) {
+  return (
+    <svg className={className} width={24} height={24} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M4 8a2 2 0 012-2h12a2 2 0 012 2v3a2 2 0 000 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2v-1a2 2 0 000-4V8zm7-3v14"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 const NAV_ICONS = {
   "/admin": IconUsers,
   "/admin/mesas": IconTables,
   "/admin/eventos": IconEvents,
+  "/admin/vouchers": IconVoucher,
   "/admin/denuncias": IconReports,
   "/admin/operacao": IconOperation,
   "/admin/restaurantes": IconRestaurant,
@@ -136,7 +152,7 @@ export function AdminMainNav() {
       aria-label="Áreas administrativas"
       style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom, 0px))" }}
     >
-      <ul className="mx-auto grid w-full max-w-6xl list-none grid-cols-7 p-0">
+      <ul className="mx-auto grid w-full max-w-6xl list-none grid-cols-8 p-0">
         {NAV.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = NAV_ICONS[item.href];

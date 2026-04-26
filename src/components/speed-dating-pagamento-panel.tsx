@@ -42,6 +42,14 @@ export function SpeedDatingPagamentoPanel({
 }: PanelProps) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherErr, setVoucherErr] = useState<string | null>(null);
+  const [voucherOk, setVoucherOk] = useState<{
+    code: string;
+    discountPercent: number;
+    finalValueCents: number;
+  } | null>(null);
   const [charge, setCharge] = useState<ChargeOk | null>(null);
   const [paymentSettled, setPaymentSettled] = useState(false);
   const [freeDone, setFreeDone] = useState(false);
@@ -111,7 +119,7 @@ export function SpeedDatingPagamentoPanel({
       const r = await fetch("/api/asaas/pix/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, regionKey }),
+        body: JSON.stringify({ eventId, regionKey, voucherCode: voucherOk?.code ?? null }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
@@ -137,7 +145,7 @@ export function SpeedDatingPagamentoPanel({
       const r = await fetch("/api/asaas/credit-card/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, regionKey }),
+        body: JSON.stringify({ eventId, regionKey, voucherCode: voucherOk?.code ?? null }),
       });
       const d = (await r.json().catch(() => ({}))) as Partial<CreditCardChargeOk> & { error?: string };
       if (!r.ok) {
@@ -244,6 +252,47 @@ export function SpeedDatingPagamentoPanel({
   }
 
   const isPaid = charge && paymentSettled;
+  const payableCents = voucherOk?.finalValueCents ?? priceCents;
+
+  async function onApplyVoucher() {
+    const code = voucherCode.trim();
+    if (!code) {
+      setVoucherErr("Digite um código promocional.");
+      setVoucherOk(null);
+      return;
+    }
+    setVoucherErr(null);
+    setVoucherLoading(true);
+    try {
+      const r = await fetch("/api/vouchers/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, code }),
+      });
+      const d = (await r.json().catch(() => ({}))) as {
+        valid?: boolean;
+        error?: string;
+        code?: string;
+        discountPercent?: number;
+        finalValueCents?: number;
+      };
+      if (!r.ok || !d.valid || !d.code || typeof d.discountPercent !== "number" || typeof d.finalValueCents !== "number") {
+        setVoucherOk(null);
+        setVoucherErr(typeof d.error === "string" ? d.error : "Cupom inválido.");
+        return;
+      }
+      setVoucherOk({
+        code: d.code,
+        discountPercent: d.discountPercent,
+        finalValueCents: d.finalValueCents,
+      });
+    } catch {
+      setVoucherOk(null);
+      setVoucherErr("Falha de rede ao validar o cupom.");
+    } finally {
+      setVoucherLoading(false);
+    }
+  }
 
   return (
     <div className="mt-2 space-y-4">
@@ -255,6 +304,36 @@ export function SpeedDatingPagamentoPanel({
 
       {!charge ? (
         <>
+          <div className="space-y-2 rounded-xl border border-movApp-border bg-movApp-subtle/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-movApp-muted">Tem um código promocional?</p>
+            <div className="flex gap-2">
+              <input
+                value={voucherCode}
+                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                placeholder="Digite o cupom"
+                className="h-11 min-h-[44px] flex-1 rounded-lg border border-movApp-border bg-white px-3 text-sm text-movApp-ink"
+              />
+              <Button
+                type="button"
+                onClick={onApplyVoucher}
+                disabled={voucherLoading || loading}
+                variant="secondary"
+                className="h-11 min-h-[44px] px-4"
+              >
+                {voucherLoading ? "Validando..." : "Aplicar"}
+              </Button>
+            </div>
+            {voucherErr ? (
+              <p className="text-xs text-red-700" role="alert">
+                {voucherErr}
+              </p>
+            ) : null}
+            {voucherOk ? (
+              <p className="text-xs text-emerald-700" role="status">
+                Cupom {voucherOk.code} aplicado ({voucherOk.discountPercent}%): {formatBRL(payableCents)}
+              </p>
+            ) : null}
+          </div>
           <div className="flex flex-col gap-3 sm:flex-col">
             <Button
               type="button"
@@ -262,7 +341,7 @@ export function SpeedDatingPagamentoPanel({
               disabled={loading}
               className="h-12 w-full min-h-[48px] text-base font-semibold"
             >
-              {loading ? "A preparar o Pix…" : `Gerar Pix de ${formatBRL(priceCents)}`}
+              {loading ? "A preparar o Pix…" : `Gerar Pix de ${formatBRL(payableCents)}`}
             </Button>
             <Button
               type="button"

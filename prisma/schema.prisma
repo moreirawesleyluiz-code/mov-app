@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -44,6 +44,7 @@ model User {
   curatedTableMember   AdminCuratedTableMember?
   passwordResetTokens  PasswordResetToken[]
   asaasPayments         AsaasPayment[]
+  voucherRedemptions    VoucherRedemption[]
 
   @@index([isTestUser, deletedAt, role])
 }
@@ -139,6 +140,13 @@ model AsaasPayment {
   /** Status devolvido pelo Asaas (PENDING, RECEIVED, etc.) */
   asaasStatus        String
   paymentMethod      PaymentMethod @default(PIX)
+  voucherId          String?
+  voucher            Voucher?      @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  voucherCode        String?
+  discountPercent    Int?
+  originalValueCents Int?
+  discountedValueCents Int?
+  voucherRedemption  VoucherRedemption?
   valueCents         Int
   /** Rastreio e conciliação: enviado como `externalReference` no Asaas */
   externalReference  String   @unique
@@ -148,6 +156,37 @@ model AsaasPayment {
   @@index([userId, eventId])
   @@index([asaasPaymentId])
   @@index([asaasStatus])
+  @@index([voucherId])
+}
+
+model Voucher {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int
+  isActive        Boolean  @default(true)
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  usageLimit      Int?
+  usageCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  asaasPayments   AsaasPayment[]
+  redemptions     VoucherRedemption[]
+}
+
+model VoucherRedemption {
+  id            String      @id @default(cuid())
+  voucherId     String
+  voucher       Voucher     @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  asaasPaymentId String     @unique
+  asaasPayment  AsaasPayment @relation(fields: [asaasPaymentId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@index([voucherId, createdAt])
+  @@index([userId, createdAt])
 }
 
 /// Restaurante parceiro — inventário operacional para alocação de mesas.

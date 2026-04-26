@@ -38,8 +38,29 @@ export async function applyRegistrationAfterSettledPayment(args: ConfirmArgs): P
 
     const rec = await tx.asaasPayment.findFirst({
       where: { id: movPaymentId, userId, eventId },
+      select: { id: true, regionKey: true, voucherId: true },
     });
     if (!rec) return { ok: false, error: "Cobrança não encontrada." } as const;
+
+    if (rec.voucherId) {
+      const redemption = await tx.voucherRedemption.findUnique({
+        where: { asaasPaymentId: rec.id },
+        select: { id: true },
+      });
+      if (!redemption) {
+        await tx.voucherRedemption.create({
+          data: {
+            voucherId: rec.voucherId,
+            asaasPaymentId: rec.id,
+            userId,
+          },
+        });
+        await tx.voucher.update({
+          where: { id: rec.voucherId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+    }
 
     const event = await tx.event.findFirst({ where: { id: eventId } });
     if (!event) return { ok: false, error: "Evento não encontrado." } as const;
