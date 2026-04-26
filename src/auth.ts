@@ -64,6 +64,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider !== "google") return true;
       const emailRaw = profile && typeof profile === "object" && "email" in profile ? profile.email : undefined;
       if (typeof emailRaw !== "string" || !emailRaw.trim()) return false;
+      const emailVerifiedRaw =
+        profile && typeof profile === "object" && "email_verified" in profile ? profile.email_verified : undefined;
+      if (emailVerifiedRaw !== true) return false;
       const { prisma } = await import("./lib/prisma");
       const email = emailRaw.toLowerCase().trim();
       const existing = await prisma.user.findUnique({ where: { email } });

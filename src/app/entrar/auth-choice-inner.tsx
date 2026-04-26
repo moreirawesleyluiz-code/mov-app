@@ -44,10 +44,8 @@ export function AuthChoiceInner({ googleAuthEnabled }: Props) {
     }
     setGoogleLoading(true);
     try {
-      const path = safeAppCallbackUrl(searchParams.get("callbackUrl"));
-      const callbackAbsolute = new URL(path, window.location.origin).href;
       const { signIn } = await import("next-auth/react");
-      await signIn("google", { callbackUrl: callbackAbsolute });
+      await signIn("google", { callbackUrl: "/app" });
     } catch (err) {
       console.warn("[MOV] Falha ao iniciar login Google:", err);
       setGoogleLoading(false);
