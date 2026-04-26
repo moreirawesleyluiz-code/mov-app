@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { movEssenciaWhatsappHref } from "@/lib/mov-essencia-whatsapp";
 
 const linkFocus =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-movApp-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-movApp-bg";
@@ -20,19 +21,11 @@ export type MovEssenciaDetailProps =
       beneficios: string;
     };
 
-function essenciaWhatsappHref(serviceTitle: string) {
-  const fromEnv = process.env.NEXT_PUBLIC_MOV_ESSENCIA_WHATSAPP?.trim();
-  if (fromEnv) return fromEnv;
-  const defaultPhone = "5511999999999";
-  const text = encodeURIComponent(`Olá! Gostaria de falar sobre ${serviceTitle}.`);
-  return `https://wa.me/${defaultPhone}?text=${text}`;
-}
-
 /** Página de serviço MOV Essência — Server Component mínimo (só `next/link`). */
 export function MovEssenciaServiceDetail(props: MovEssenciaDetailProps) {
   if ("narrativeParagraphs" in props) {
     const { title, narrativeParagraphs } = props;
-    const whatsappHref = essenciaWhatsappHref(title);
+    const whatsappHref = movEssenciaWhatsappHref(title);
 
     return (
       <main
