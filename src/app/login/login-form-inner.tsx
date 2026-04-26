@@ -37,6 +37,7 @@ export function LoginFormInner() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -135,17 +136,40 @@ export function LoginFormInner() {
             <label htmlFor="login-password" className={authLabelClass}>
               Senha
             </label>
-            <input
-              id="login-password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputClass, "mt-2 rounded-[0.875rem] px-4 py-3 text-[15px]")}
-            />
+            <div className="relative mt-2">
+              <input
+                id="login-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn(authInputClass, "rounded-[0.875rem] px-4 py-3 pr-12 text-[15px]")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-movApp-muted transition hover:text-movApp-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-movApp-accent/40"
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3.11-11-8 1.01-2.84 2.89-4.98 5.3-6.32" />
+                    <path d="M1 1l22 22" />
+                    <path d="M9.53 9.53A3.5 3.5 0 0 0 12 15.5c.69 0 1.34-.2 1.89-.55" />
+                    <path d="M14.47 14.47A3.5 3.5 0 0 0 9.53 9.53" />
+                    <path d="M20.48 15.26A11.26 11.26 0 0 0 23 12c-1.73-4.89-6-8-11-8-1.4 0-2.74.24-4 .68" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
             <div className="relative z-10 mt-3 flex justify-end">
               <a
                 href="/forgot-password"
