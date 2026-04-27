@@ -6,18 +6,23 @@ const targetDir = path.join(__dirname, "..", ".prisma");
 const target = path.join(targetDir, "schema.postgresql.prisma");
 
 const raw = fs.readFileSync(source, "utf8");
-const next = raw.replace(
+const converted = raw.replace(
   /datasource\s+db\s*\{([\s\S]*?)provider\s*=\s*"sqlite"/m,
   (match) => match.replace(/provider\s*=\s*"sqlite"/, 'provider = "postgresql"'),
 );
 
-if (raw === next) {
-  console.error('[MOV] Não foi possível preparar schema Postgres (provider "sqlite" não encontrado).');
+const alreadyPostgres = /datasource\s+db\s*\{[\s\S]*?provider\s*=\s*"postgresql"/m.test(raw);
+const convertedFromSqlite = converted !== raw;
+
+if (!alreadyPostgres && !convertedFromSqlite) {
+  console.error(
+    '[MOV] Não foi possível preparar schema Postgres (provider "sqlite" ou "postgresql" não encontrado no datasource db).',
+  );
   process.exit(1);
 }
 
 fs.mkdirSync(targetDir, { recursive: true });
-fs.writeFileSync(target, next, "utf8");
+fs.writeFileSync(target, convertedFromSqlite ? converted : raw, "utf8");
 console.log("[MOV] Schema Postgres pronto em .prisma/schema.postgresql.prisma");
 
 const sourceMigrationsDir = path.join(__dirname, "..", "prisma", "migrations");
