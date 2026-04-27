@@ -52,7 +52,7 @@ export default async function AdminVouchersPage({ searchParams }: Props) {
           {isEditing ? "Editar voucher" : "Novo voucher"}
         </h2>
         <form action={isEditing ? updateVoucher : createVoucher} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {isEditing ? <input type="hidden" name="id" value={editing.id} /> : null}
+          {editing ? <input type="hidden" name="id" value={editing.id} /> : null}
           <label className="text-xs font-medium text-movApp-muted">
             Código
             <input
