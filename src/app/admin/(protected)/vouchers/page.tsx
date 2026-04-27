@@ -37,15 +37,35 @@ export default async function AdminVouchersPage({ searchParams }: Props) {
   const sp = searchParams ? await searchParams : {};
   const editId = firstString(sp.edit);
 
-  const vouchers = await prisma.voucher.findMany({
-    orderBy: [{ createdAt: "desc" }],
-  });
+  let vouchers: Array<{
+    id: string;
+    code: string;
+    discountPercent: number;
+    isActive: boolean;
+    startsAt: Date | null;
+    expiresAt: Date | null;
+    usageLimit: number | null;
+    usageCount: number;
+    createdAt: Date;
+  }> = [];
+  let loadError: string | null = null;
+  try {
+    vouchers = await prisma.voucher.findMany({
+      orderBy: [{ createdAt: "desc" }],
+    });
+  } catch (err) {
+    console.error("[admin/vouchers] falha ao carregar vouchers:", err);
+    loadError = "Não foi possível carregar vouchers neste ambiente.";
+  }
   const editing = editId ? vouchers.find((v) => v.id === editId) ?? null : null;
   const isEditing = Boolean(editing);
 
   return (
     <div>
       <h1 className="font-display text-2xl font-semibold tracking-tight text-movApp-ink">Vouchers</h1>
+      {loadError ? (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{loadError}</p>
+      ) : null}
 
       <section className="mt-5 rounded-2xl border border-movApp-border bg-movApp-paper p-5 shadow-sm">
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-movApp-muted">

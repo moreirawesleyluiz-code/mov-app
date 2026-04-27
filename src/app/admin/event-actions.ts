@@ -144,3 +144,41 @@ export async function setEventPublished(id: string, published: boolean) {
   await prisma.event.update({ where: { id }, data: { published } });
   revalidateEventSurfaces(id);
 }
+
+export async function deleteAdminEvent(id: string) {
+  await assertAdminRole();
+  const event = await prisma.event.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      _count: {
+        select: {
+          registrations: true,
+          asaasPayments: true,
+          experienceFeedbacks: true,
+          safetyReports: true,
+          curatedTables: true,
+        },
+      },
+    },
+  });
+
+  if (!event) {
+    redirect("/admin/eventos?error=evento-nao-encontrado");
+  }
+
+  const hasDependencies =
+    event._count.registrations > 0 ||
+    event._count.asaasPayments > 0 ||
+    event._count.experienceFeedbacks > 0 ||
+    event._count.safetyReports > 0 ||
+    event._count.curatedTables > 0;
+
+  if (hasDependencies) {
+    redirect("/admin/eventos?error=evento-com-dependencias");
+  }
+
+  await prisma.event.delete({ where: { id } });
+  revalidateEventSurfaces();
+  redirect("/admin/eventos?success=evento-excluido");
+}

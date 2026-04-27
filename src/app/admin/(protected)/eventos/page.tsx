@@ -1,4 +1,5 @@
-import { setEventPublished, upsertAdminEvent } from "@/app/admin/event-actions";
+import { deleteAdminEvent, setEventPublished, upsertAdminEvent } from "@/app/admin/event-actions";
+import { AdminDeleteEventButton } from "@/components/admin/admin-delete-event-button";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -42,10 +43,11 @@ const TYPE_LABEL: Record<string, string> = {
 export default async function AdminEventosPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; success?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const error = resolvedSearchParams?.error;
+  const success = resolvedSearchParams?.success;
   const events = await prisma.event.findMany({
     orderBy: [{ startsAt: "asc" }, { createdAt: "desc" }],
   });
@@ -72,6 +74,21 @@ export default async function AdminEventosPage({
         {error === "slug-duplicado" ? (
           <p className="mt-3 rounded-lg border border-red-200 bg-red-50/80 p-3 text-sm text-red-800">
             Já existe um evento com este slug. Use outro slug.
+          </p>
+        ) : null}
+        {error === "evento-com-dependencias" ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50/80 p-3 text-sm text-red-800">
+            Não foi possível excluir: o evento possui inscrições, pagamentos ou outros vínculos.
+          </p>
+        ) : null}
+        {error === "evento-nao-encontrado" ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50/80 p-3 text-sm text-red-800">
+            Evento não encontrado para exclusão.
+          </p>
+        ) : null}
+        {success === "evento-excluido" ? (
+          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800">
+            Evento excluído com sucesso.
           </p>
         ) : null}
         <form action={upsertAdminEvent} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -216,19 +233,22 @@ export default async function AdminEventosPage({
                         {event.published ? "ativo" : "inativo"}
                       </p>
                     </div>
-                    <form
-                      action={async () => {
-                        "use server";
-                        await setEventPublished(event.id, !event.published);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink"
+                    <div className="flex items-center gap-2">
+                      <form
+                        action={async () => {
+                          "use server";
+                          await setEventPublished(event.id, !event.published);
+                        }}
                       >
-                        {event.published ? "Desativar" : "Ativar"}
-                      </button>
-                    </form>
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-movApp-border px-3 py-1.5 text-xs font-medium text-movApp-ink"
+                        >
+                          {event.published ? "Desativar" : "Ativar"}
+                        </button>
+                      </form>
+                      <AdminDeleteEventButton eventId={event.id} />
+                    </div>
                   </div>
 
                   <details className="mt-3 rounded-xl border border-movApp-border/70 bg-movApp-subtle/35 p-3">
